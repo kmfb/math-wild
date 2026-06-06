@@ -1,5 +1,5 @@
 {
-  "name": "@math-wild/concept-core",
+  "name": "@math-wild/math-kernel",
   "version": "0.8.0",
   "private": true,
   "type": "module",
@@ -9,9 +9,6 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
-  },
-  "dependencies": {
-    "@math-wild/math-worlds": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

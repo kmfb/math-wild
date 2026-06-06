@@ -1,17 +1,18 @@
 {
-  "name": "@math-wild/concept-core",
+  "name": "@math-wild/math-worlds",
   "version": "0.8.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./equation-balance": "./src/equation-balance/index.ts"
   },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@math-wild/math-worlds": "workspace:*"
+    "@math-wild/math-kernel": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

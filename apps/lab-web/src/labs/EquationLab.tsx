@@ -1,66 +1,106 @@
 import { useEffect } from "react";
 import { create } from "zustand";
 import {
-  createInitialState,
-  removeUnit,
-  restoreBlock,
   verifySpec,
   verifyState,
   type BalanceState,
   type EquationBalanceSpec,
   type Side,
 } from "@math-wild/concept-core";
+import type { Feedback, InvariantResult, TraceEvent } from "@math-wild/math-kernel";
+import {
+  EquationBalanceWorld,
+  measureEquation,
+  type EquationBalanceAction,
+  type EquationMeasurements,
+} from "@math-wild/math-worlds/equation-balance";
 import specJson from "../../../../packages/concept-specs/equation_balance_x_plus_3_eq_8.json";
 import BalanceSvg from "../renderers/BalanceSvg";
 
 const spec = specJson as EquationBalanceSpec;
+const world = new EquationBalanceWorld(spec);
 
 type LabStore = {
   state: BalanceState;
+  invariantResults: InvariantResult[];
+  feedback: Feedback;
+  measurements: EquationMeasurements;
+  trace: TraceEvent<BalanceState, EquationBalanceAction>[];
   remove: (side: Side, blockId: string) => void;
   undo: () => void;
   reset: () => void;
 };
 
-const initialState = createInitialState(spec);
-
-const useLabStore = create<LabStore>((set) => ({
-  state: initialState,
-  remove: (side, blockId) => set((store) => ({ state: removeUnit(store.state, spec, side, blockId) })),
-  undo: () =>
-    set((store) => {
-      if (store.state.removedRight.length > store.state.removedLeft.length) {
-        return { state: restoreBlock(store.state, spec, "right") };
-      }
-      return { state: restoreBlock(store.state, spec, "left") };
-    }),
-  reset: () => set({ state: createInitialState(spec) }),
-}));
-
-function statusText(status: BalanceState["status"]) {
-  if (status === "solved") {
-    return "x = 5";
-  }
-  if (status === "balanced") {
-    return "保持平衡";
-  }
-  return "失衡了";
+function snapshot(state: BalanceState) {
+  const invariantResults = world.checkInvariants(state);
+  return {
+    state,
+    invariantResults,
+    feedback: world.getFeedback(state, invariantResults),
+    measurements: measureEquation(state),
+  };
 }
 
-function statusDetail(state: BalanceState) {
-  if (state.status === "solved") {
+const useLabStore = create<LabStore>((set) => ({
+  ...snapshot(world.createInitialState()),
+  trace: [],
+  remove: (side, blockId) =>
+    set((store) => {
+      const event = world.act(store.state, { type: "removeUnit", side, blockId });
+      return {
+        ...snapshot(event.after),
+        trace: [...store.trace, event],
+      };
+    }),
+  undo: () =>
+    set((store) => {
+      const last = store.trace.at(-1);
+      if (!last) {
+        return store;
+      }
+      return {
+        ...snapshot(last.before),
+        trace: store.trace.slice(0, -1),
+      };
+    }),
+  reset: () => set({ ...snapshot(world.createInitialState()), trace: [] }),
+}));
+
+function feedbackClass(feedback: Feedback) {
+  if (feedback.kind === "reveal" || feedback.kind === "celebration") {
+    return "solved";
+  }
+  if (feedback.kind === "broken-equality" || feedback.kind === "unbalanced") {
+    return "unbalanced";
+  }
+  return "balanced";
+}
+
+function feedbackTitle(feedback: Feedback) {
+  if (feedback.kind === "reveal" || feedback.kind === "celebration") {
+    return feedback.message ?? "x = 5";
+  }
+  if (feedback.kind === "broken-equality" || feedback.kind === "unbalanced") {
+    return "关系断了";
+  }
+  return "保持平衡";
+}
+
+function feedbackDetail(feedback: Feedback, measurements: EquationMeasurements) {
+  if (feedback.kind === "reveal" || feedback.kind === "celebration") {
     return "左右同时去掉 3 个单位块，剩下 x 和 5 个单位块。";
   }
-  if (state.status === "balanced") {
-    return "两边的值相等。";
+  if (feedback.kind === "broken-equality" || feedback.kind === "unbalanced") {
+    return `不变量 broken：left = ${measurements.leftTotal}，right = ${measurements.rightTotal}，delta = ${measurements.delta}`;
   }
-  return "只改变一边会破坏等号关系。";
+  return `不变量 restored：left = ${measurements.leftTotal}，right = ${measurements.rightTotal}，delta = 0`;
 }
 
 export default function EquationLab() {
-  const { state, remove, undo, reset } = useLabStore();
+  const { state, invariantResults, feedback, measurements, trace, remove, undo, reset } = useLabStore();
   const specCheck = verifySpec(spec);
   const stateCheck = verifyState(state, spec);
+  const status = feedbackClass(feedback);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -81,21 +121,27 @@ export default function EquationLab() {
             <p className="lab-kicker">Equation Lab</p>
             <h1>{spec.title}</h1>
           </div>
-          <div className={`status-pill is-${state.status}`} aria-live="polite" data-testid="balance-status">
-            {statusText(state.status)}
+          <div className={`status-pill is-${status}`} aria-live="polite" data-testid="balance-status">
+            {feedbackTitle(feedback)}
           </div>
         </header>
 
         <div className="lab-body">
           <div className="balance-panel">
-            <BalanceSvg state={state} onRemoveUnit={remove} />
+            <BalanceSvg
+              state={state}
+              equation={spec.equation}
+              feedback={feedback}
+              measurements={measurements}
+              onRemoveUnit={remove}
+            />
           </div>
 
           <aside className="feedback-panel">
             <div className="feedback-main">
               <p className="equation-label">{spec.equation}</p>
-              <h2>{statusText(state.status)}</h2>
-              <p>{statusDetail(state)}</p>
+              <h2>{feedbackTitle(feedback)}</h2>
+              <p>{feedbackDetail(feedback, measurements)}</p>
             </div>
 
             <div className="metrics-grid" aria-label="Removed blocks">
@@ -118,9 +164,15 @@ export default function EquationLab() {
               </button>
             </div>
 
+            <div className="trace-panel" aria-label="Trace">
+              <span>Trace</span>
+              <strong>{trace.length}</strong>
+            </div>
+
             <div className="verifier-strip">
               <span>Spec {specCheck.status}</span>
               <span>State {stateCheck.status}</span>
+              <span>Invariant {invariantResults.every((result) => result.ok) ? "PASS" : "BROKEN"}</span>
             </div>
           </aside>
         </div>

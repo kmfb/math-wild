@@ -18,7 +18,7 @@ apps/lab-web → Equation Lab for x + 3 = 8
 ## What this repo does
 
 This repo renders structured math chapters into Manim lesson videos, exports keyframes, composes posters from those keyframes, and writes a per-chapter render report.
-It also includes a small React/SVG Equation Lab backed by shared concept specs and pure rule functions.
+It also includes a React/SVG Equation Lab backed by an invariant-driven math world.
 
 ```text
 chapters/<chapter>/chapter_spec.json
@@ -79,8 +79,29 @@ The Lab uses:
 
 ```text
 packages/concept-specs/equation_balance_x_plus_3_eq_8.json
-→ packages/concept-core/
+→ packages/math-kernel/
+→ packages/math-worlds/equation-balance/
 → apps/lab-web/
+```
+
+v0.8 makes the Equation Lab invariant-driven:
+
+```text
+user input
+→ EquationBalanceAction
+→ EquationBalanceWorld.act()
+→ invariant results
+→ feedback
+→ trace event
+→ web renderer
+```
+
+React does not decide whether the equation is balanced. It reads:
+
+```text
+world.checkInvariants(state)
+world.getFeedback(state)
+trace
 ```
 
 Render one chapter:
@@ -162,7 +183,7 @@ MATH_WILD_CJK_FONT="Microsoft YaHei" uv run python render.py --all --quality ql
 ## Core principle
 
 ```text
-scene spec controls math facts
-Manim controls visual expression
-poster composer only combines Manim keyframes
+math world state and invariants control math facts
+React, Manim, and poster export are renderers
+trace records the executable path through the world
 ```

@@ -1,6 +1,6 @@
 {
   "name": "@math-wild/lab-web",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@math-wild/concept-core": "workspace:*",
+    "@math-wild/math-kernel": "workspace:*",
+    "@math-wild/math-worlds": "workspace:*",
     "@vitejs/plugin-react": "^5.1.1",
     "vite": "^7.2.7",
     "typescript": "^5.9.3",

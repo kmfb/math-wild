@@ -195,6 +195,28 @@ h1 {
   flex: 1;
 }
 
+.trace-panel {
+  min-height: 64px;
+  border: 1px solid rgba(242, 197, 88, 0.18);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(242, 197, 88, 0.08);
+}
+
+.trace-panel span {
+  display: block;
+  color: #f2c558;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.trace-panel strong {
+  display: block;
+  color: #eeeadd;
+  font-size: 1.8rem;
+  margin-top: 2px;
+}
+
 .verifier-strip {
   margin-top: auto;
   display: flex;

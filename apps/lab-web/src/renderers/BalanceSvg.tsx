@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef } from "react";
 import type { BalanceState, Block, Side } from "@math-wild/concept-core";
-import { sideValue } from "@math-wild/concept-core";
+import type { Feedback } from "@math-wild/math-kernel";
+import type { EquationMeasurements } from "@math-wild/math-worlds/equation-balance";
 import { useDragBlock } from "../interactions/useDragBlock";
 import Pan from "./Pan";
 import UnitBlock from "./UnitBlock";
@@ -8,6 +9,9 @@ import UnknownBlock from "./UnknownBlock";
 
 type BalanceSvgProps = {
   state: BalanceState;
+  equation: string;
+  feedback: Feedback;
+  measurements: EquationMeasurements;
   onRemoveUnit: (side: Side, blockId: string) => void;
 };
 
@@ -43,10 +47,21 @@ function renderBlocks(blocks: Block[], side: Side, bindBlock: ReturnType<typeof 
   });
 }
 
-export default function BalanceSvg({ state, onRemoveUnit }: BalanceSvgProps) {
+function svgStatus(feedback: Feedback) {
+  if (feedback.kind === "reveal" || feedback.kind === "celebration") {
+    return "solved";
+  }
+  if (feedback.kind === "broken-equality" || feedback.kind === "unbalanced") {
+    return "unbalanced";
+  }
+  return "balanced";
+}
+
+export default function BalanceSvg({ state, equation, feedback, measurements, onRemoveUnit }: BalanceSvgProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const tilt = state.status === "unbalanced" ? (sideValue("left", state) > sideValue("right", state) ? -5 : 5) : 0;
-  const statusClass = `balance-svg is-${state.status}`;
+  const isBroken = feedback.kind === "broken-equality" || feedback.kind === "unbalanced";
+  const tilt = isBroken ? (measurements.delta > 0 ? -5 : 5) : 0;
+  const statusClass = `balance-svg is-${svgStatus(feedback)}`;
 
   const handleDrop = useCallback(
     ({ block, side, point }: { block: Block; side: Side; point: { x: number; y: number } }) => {
@@ -79,13 +94,13 @@ export default function BalanceSvg({ state, onRemoveUnit }: BalanceSvgProps) {
       <line className="svg-stand" x1="450" y1="226" x2="450" y2="402" />
       <ellipse className="svg-base" cx="450" cy="424" rx="72" ry="14" />
       <text className="svg-equation" x="450" y="104" textAnchor="middle">
-        x + 3 = 8
+        {equation}
       </text>
       <text className="svg-side-label" x="304" y="388" textAnchor="middle">
-        left: {sideValue("left", state)}
+        left: {measurements.leftTotal}
       </text>
       <text className="svg-side-label" x="596" y="388" textAnchor="middle">
-        right: {sideValue("right", state)}
+        right: {measurements.rightTotal}
       </text>
       <g className="svg-remove-zone">
         <rect x="124" y={REMOVE_ZONE_Y} width="652" height="64" rx="8" />

@@ -1,3 +1,4 @@
+import { EquationBalanceWorld } from "@math-wild/math-worlds/equation-balance";
 import { countUnits, createInitialState, isGoalState, sideValue } from "./equationBalance";
 import type { BalanceState, EquationBalanceSpec, VerificationResult } from "./types";
 
@@ -28,11 +29,16 @@ export function verifySpec(spec: EquationBalanceSpec): VerificationResult {
 }
 
 export function verifyState(state: BalanceState, spec: EquationBalanceSpec): VerificationResult {
+  const world = new EquationBalanceWorld(spec);
+  const invariantResults = world.checkInvariants(state);
+  const equality = invariantResults.find((result) => result.id === "equation.balance");
   const checks = [
     {
-      id: "value_consistency",
-      pass: state.status === "unbalanced" || sideValue("left", state) === sideValue("right", state),
-      value: { left: sideValue("left", state), right: sideValue("right", state), status: state.status },
+      id: "invariant_status_consistency",
+      pass:
+        (equality?.ok && state.status !== "unbalanced") ||
+        (!equality?.ok && state.status === "unbalanced"),
+      value: { invariant: equality, status: state.status },
     },
     {
       id: "removed_counts",
