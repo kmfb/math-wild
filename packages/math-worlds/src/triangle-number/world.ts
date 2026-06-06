@@ -7,7 +7,15 @@ import type {
   TriangleStage,
 } from "./types";
 
-const STAGE_ORDER: TriangleStage[] = ["single", "duplicated", "flipped", "snapped", "derived"];
+const STAGE_ORDER: TriangleStage[] = [
+  "idle",
+  "draggingCopy",
+  "nearSolution",
+  "snapped",
+  "deriving",
+  "derived",
+  "hundredClimax",
+];
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(Math.round(value), min), max);
@@ -31,7 +39,7 @@ export function measureTriangleNumber(state: TriangleNumberState): TriangleMeasu
 
 export function checkTriangleInvariants(state: TriangleNumberState): InvariantResult[] {
   const measurement = measureTriangleNumber(state);
-  const rectangleVisible = state.stage === "snapped" || state.stage === "derived";
+  const rectangleVisible = ["nearSolution", "snapped", "deriving", "derived", "hundredClimax"].includes(state.stage);
   const ok = !rectangleVisible || measurement.doubledDots === measurement.rectangleDots;
   return [
     {
@@ -56,10 +64,14 @@ export function checkTriangleInvariants(state: TriangleNumberState): InvariantRe
 }
 
 function nextStageFor(action: TriangleNumberAction, current: TriangleStage): TriangleStage {
-  if (action.type === "duplicateTriangle") return "duplicated";
-  if (action.type === "flipCopy") return current === "single" ? "single" : "flipped";
-  if (action.type === "snapToRectangle") return current === "single" ? "single" : "snapped";
-  if (action.type === "deriveFormula") return current === "single" ? "single" : "derived";
+  if (action.type === "startDraggingCopy") return "draggingCopy";
+  if (action.type === "approachSolution") return "nearSolution";
+  if (action.type === "leaveSolution") return current === "nearSolution" ? "draggingCopy" : current;
+  if (action.type === "snapToRectangle") return current === "nearSolution" || current === "draggingCopy" ? "snapped" : current;
+  if (action.type === "startDeriving") return current === "snapped" || current === "hundredClimax" ? "deriving" : current;
+  if (action.type === "finishDeriving") return current === "deriving" || current === "snapped" ? "derived" : current;
+  if (action.type === "hundredClimax") return "hundredClimax";
+  if (action.type === "playDemo") return "snapped";
   return current;
 }
 
@@ -79,7 +91,7 @@ export class TriangleNumberWorld implements MathWorld<TriangleNumberState, Trian
   }
 
   createInitialState(): TriangleNumberState {
-    return { n: this.spec.initialN, stage: "single" };
+    return { n: this.spec.initialN, stage: "idle" };
   }
 
   checkInvariants(state: TriangleNumberState): InvariantResult[] {
@@ -88,6 +100,13 @@ export class TriangleNumberWorld implements MathWorld<TriangleNumberState, Trian
 
   getFeedback(state: TriangleNumberState, _results = this.checkInvariants(state)): Feedback {
     const measurement = measureTriangleNumber(state);
+    if (state.stage === "hundredClimax") {
+      return {
+        kind: "reveal",
+        intensity: 1,
+        message: "100 × 101 = 10100, half is 5050",
+      };
+    }
     if (state.stage === "derived") {
       return {
         kind: "reveal",
@@ -95,7 +114,7 @@ export class TriangleNumberWorld implements MathWorld<TriangleNumberState, Trian
         message: `T = ${measurement.n} × ${measurement.n + 1} ÷ 2 = ${measurement.value}`,
       };
     }
-    if (state.stage === "snapped") {
+    if (state.stage === "snapped" || state.stage === "deriving") {
       return {
         kind: "balanced",
         intensity: 0.8,
@@ -117,6 +136,12 @@ export class TriangleNumberWorld implements MathWorld<TriangleNumberState, Trian
       return {
         n: clamp(action.n, this.spec.minN, this.spec.maxN),
         stage: state.stage,
+      };
+    }
+    if (action.type === "hundredClimax") {
+      return {
+        n: 100,
+        stage: "hundredClimax",
       };
     }
     return {

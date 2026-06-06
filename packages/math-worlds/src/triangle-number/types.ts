@@ -1,4 +1,11 @@
-export type TriangleStage = "single" | "duplicated" | "flipped" | "snapped" | "derived";
+export type TriangleStage =
+  | "idle"
+  | "draggingCopy"
+  | "nearSolution"
+  | "snapped"
+  | "deriving"
+  | "derived"
+  | "hundredClimax";
 
 export type TriangleNumberSpec = {
   id: string;
@@ -17,10 +24,14 @@ export type TriangleNumberState = {
 
 export type TriangleNumberAction =
   | { type: "setN"; n: number }
-  | { type: "duplicateTriangle" }
-  | { type: "flipCopy" }
+  | { type: "startDraggingCopy" }
+  | { type: "leaveSolution" }
+  | { type: "approachSolution" }
   | { type: "snapToRectangle" }
-  | { type: "deriveFormula" }
+  | { type: "startDeriving" }
+  | { type: "finishDeriving" }
+  | { type: "hundredClimax" }
+  | { type: "playDemo" }
   | { type: "reset" };
 
 export type TriangleMeasurements = {

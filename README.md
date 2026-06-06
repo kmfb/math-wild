@@ -89,7 +89,7 @@ It shows why:
 1 + 2 + ... + n = n(n + 1) / 2
 ```
 
-by letting the user duplicate a dot triangle, flip it, snap it into a rectangle, and then derive the formula.
+by starting with an orange right-triangle dot array and a blue copy. The main interaction is to drag the blue copy toward the rectangle target; near the solution it auto-aligns, snaps into a rectangle, sweeps the rows, and then reveals the formula.
 
 The Equation Lab remains available in source:
 

@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useDrag } from "@use-gesture/react";
 import { create } from "zustand";
 import type { Feedback, InvariantResult, TraceEvent } from "@math-wild/math-kernel";
 import {
@@ -8,7 +9,6 @@ import {
   type TriangleNumberAction,
   type TriangleNumberSpec,
   type TriangleNumberState,
-  type TriangleStage,
 } from "@math-wild/math-worlds/triangle-number";
 import specJson from "../../../../packages/concept-specs/triangle_number_sum.json";
 
@@ -23,6 +23,34 @@ type HeroStore = {
   trace: TraceEvent<TriangleNumberState, TriangleNumberAction>[];
   act: (action: TriangleNumberAction) => void;
 };
+
+type VisualDot = {
+  id: string;
+  source: "orange" | "blue";
+  x: number;
+  y: number;
+};
+
+const VIEWBOX = { width: 1000, height: 560 };
+const ORANGE_BOX = { x: 130, y: 130, width: 270, height: 300 };
+const BLUE_BOX = { x: 600, y: 130, width: 270, height: 300 };
+const RECT_BOX = { x: 225, y: 105, width: 550, height: 340 };
+const SNAP_DISTANCE = 145;
+
+const RECTANGLE_STAGES: TriangleNumberState["stage"][] = [
+  "nearSolution",
+  "snapped",
+  "deriving",
+  "derived",
+  "hundredClimax",
+];
+
+const LOCKED_RECTANGLE_STAGES: TriangleNumberState["stage"][] = [
+  "snapped",
+  "deriving",
+  "derived",
+  "hundredClimax",
+];
 
 function snapshot(state: TriangleNumberState) {
   const invariantResults = world.checkInvariants(state);
@@ -47,85 +75,91 @@ const useHeroStore = create<HeroStore>((set) => ({
     }),
 }));
 
-function stageIndex(stage: TriangleStage) {
-  return ["single", "duplicated", "flipped", "snapped", "derived"].indexOf(stage);
-}
-
-function stageInstruction(stage: TriangleStage) {
-  if (stage === "single") return "先复制一份，不要开始数。";
-  if (stage === "duplicated") return "点一下副本，把它翻过来。";
-  if (stage === "flipped") return "拖动翻转后的副本，靠近虚线矩形。";
-  if (stage === "snapped") return "现在它是 n 行、每行 n + 1 个。";
-  return "原来的三角形，就是这个长方形的一半。";
+function stageInstruction(state: TriangleNumberState) {
+  if (state.stage === "idle") return "拖动蓝色三角形，让它补到橙色旁边。";
+  if (state.stage === "draggingCopy") return "继续拖。靠近虚线矩形时，它会自己对齐。";
+  if (state.stage === "nearSolution") return "对，就是这里。松手吸附。";
+  if (state.stage === "snapped") return "每一行都补齐成 n + 1 个点。";
+  if (state.stage === "deriving") return "读这个长方形：n 行，每行 n + 1。";
+  if (state.stage === "hundredClimax") return "100 层不用数。它也是一个长方形的一半。";
+  return "一个三角形，就是这个长方形的一半。";
 }
 
 function actionLabel(action: TriangleNumberAction) {
-  if (action.type === "duplicateTriangle") return "复制";
-  if (action.type === "flipCopy") return "翻转";
-  if (action.type === "snapToRectangle") return "拼合";
-  if (action.type === "deriveFormula") return "公式浮现";
+  if (action.type === "startDraggingCopy") return "拖动";
+  if (action.type === "approachSolution") return "靠近";
+  if (action.type === "snapToRectangle") return "吸附";
+  if (action.type === "startDeriving") return "读长方形";
+  if (action.type === "finishDeriving") return "公式浮现";
+  if (action.type === "hundredClimax") return "100 层";
+  if (action.type === "playDemo") return "看一次";
   if (action.type === "reset") return "重置";
-  return `n=${action.n}`;
+  if (action.type === "setN") return `n=${action.n}`;
+  return "离开";
 }
 
-function DotTriangle({ n, ghost = false, flipped = false }: { n: number; ghost?: boolean; flipped?: boolean }) {
-  const rows = useMemo(() => Array.from({ length: n }, (_, row) => (flipped ? n - row : row + 1)), [flipped, n]);
-  if (n > 20) {
-    const abstractRows = rows.slice(0, 18);
-    return (
-      <div className={`dot-triangle is-abstract ${ghost ? "is-ghost" : ""} ${flipped ? "is-flipped" : ""}`}>
-        {abstractRows.map((count, row) => (
-          <div className="dot-row" key={row}>
-            {Array.from({ length: Math.min(count, 18) }, (_, index) => (
-              <span className="dot" key={index} />
-            ))}
-          </div>
-        ))}
-        <strong>{n} 层</strong>
-      </div>
-    );
+function gridPoint(row: number, column: number, rows: number, columns: number, box: typeof RECT_BOX) {
+  const xStep = columns <= 1 ? 0 : box.width / (columns - 1);
+  const yStep = rows <= 1 ? 0 : box.height / (rows - 1);
+  return {
+    x: box.x + column * xStep,
+    y: box.y + row * yStep,
+  };
+}
+
+function buildDots(n: number, stage: TriangleNumberState["stage"]): VisualDot[] {
+  const isRectangle = RECTANGLE_STAGES.includes(stage);
+  const dots: VisualDot[] = [];
+  const rectangleColumns = n + 1;
+
+  for (let row = 0; row < n; row += 1) {
+    for (let column = 0; column <= row; column += 1) {
+      const point = isRectangle
+        ? gridPoint(row, column, n, rectangleColumns, RECT_BOX)
+        : gridPoint(row, column, n, n, ORANGE_BOX);
+      dots.push({ id: `orange-${row}-${column}`, source: "orange", ...point });
+    }
   }
-  return (
-    <div className={`dot-triangle ${ghost ? "is-ghost" : ""} ${flipped ? "is-flipped" : ""}`}>
-      {rows.map((count, row) => (
-        <div className="dot-row" key={row}>
-          {Array.from({ length: count }, (_, index) => (
-            <span className="dot" key={index} />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
+
+  for (let row = 0; row < n; row += 1) {
+    for (let index = 0; index < n - row; index += 1) {
+      const rectangleColumn = row + 1 + index;
+      const point = isRectangle
+        ? gridPoint(row, rectangleColumn, n, rectangleColumns, RECT_BOX)
+        : gridPoint(row, index, n, n, BLUE_BOX);
+      dots.push({ id: `blue-${row}-${index}`, source: "blue", ...point });
+    }
+  }
+
+  return dots;
 }
 
-function TriangleRectangle({ n, measurements }: { n: number; measurements: TriangleMeasurements }) {
-  const displayRows = measurements.usesAbstractView ? 20 : n;
-  const displayColumns = measurements.usesAbstractView ? 21 : n + 1;
-  const cells = useMemo(
-    () =>
-      Array.from({ length: displayRows }, (_, row) =>
-        Array.from({ length: displayColumns }, (_, column) => ({
-          id: `${row}-${column}`,
-          source: column <= row ? "original" : "copy",
-        })),
-      ).flat(),
-    [displayColumns, displayRows],
-  );
-  return (
-    <div
-      className={`triangle-rectangle ${measurements.usesAbstractView ? "is-abstract" : ""}`}
-      style={{ "--columns": displayColumns } as CSSProperties}
-    >
-      {cells.map((cell) => (
-        <span className={`dot is-${cell.source}`} key={cell.id} />
-      ))}
-      <i className="rectangle-diagonal" />
-      <strong>{measurements.rectangleRows} × {measurements.rectangleColumns}</strong>
-    </div>
-  );
+function buildDenseDots(): VisualDot[] {
+  const rows = 24;
+  const columns = 25;
+  return Array.from({ length: rows }, (_, row) =>
+    Array.from({ length: columns }, (_, column) => {
+      const point = gridPoint(row, column, rows, columns, RECT_BOX);
+      return {
+        id: `dense-${row}-${column}`,
+        source: column <= row ? "orange" : "blue",
+        ...point,
+      } satisfies VisualDot;
+    }),
+  ).flat();
 }
 
-function ProofStage({
+function formulaText(state: TriangleNumberState, measurements: TriangleMeasurements) {
+  if (state.stage === "idle" || state.stage === "draggingCopy" || state.stage === "nearSolution") {
+    return `1 + 2 + ... + ${state.n}`;
+  }
+  if (state.stage === "snapped") return `每行 ${state.n + 1} 个点`;
+  if (state.stage === "deriving") return `两个三角形 = ${state.n} × ${state.n + 1}`;
+  if (state.stage === "hundredClimax") return "100 × 101 ÷ 2 = 5050";
+  return `1 + 2 + ... + ${state.n} = ${measurements.value}`;
+}
+
+function DotStage({
   state,
   measurements,
   act,
@@ -134,144 +168,124 @@ function ProofStage({
   measurements: TriangleMeasurements;
   act: (action: TriangleNumberAction) => void;
 }) {
-  const index = stageIndex(state.stage);
-  const [drag, setDrag] = useState({ active: false, startX: 0, startY: 0, x: 0, y: 0 });
-  const stageRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const stageRef = useRef(state.stage);
+  const [drag, setDrag] = useState({ active: false, x: 0, y: 0, near: false });
+  const isRectangle = RECTANGLE_STAGES.includes(state.stage);
+  const isLockedRectangle = LOCKED_RECTANGLE_STAGES.includes(state.stage);
+  const dots = useMemo(() => {
+    if (state.n > 24 && isRectangle) return buildDenseDots();
+    return buildDots(state.n, state.stage);
+  }, [isRectangle, state.n, state.stage]);
 
-  function beginDrag(event: PointerEvent<HTMLDivElement>) {
-    if (state.stage !== "flipped") return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setDrag({ active: true, startX: event.clientX, startY: event.clientY, x: 0, y: 0 });
-  }
+  useEffect(() => {
+    stageRef.current = state.stage;
+  }, [state.stage]);
 
-  function moveDrag(event: PointerEvent<HTMLDivElement>) {
-    if (!drag.active) return;
-    setDrag((current) => ({
-      ...current,
-      x: event.clientX - current.startX,
-      y: event.clientY - current.startY,
-    }));
-  }
+  const bindBlueDrag = useDrag(
+    ({ active, first, last, movement: [moveX, moveY], cancel }) => {
+      if (isLockedRectangle) {
+        cancel();
+        return;
+      }
 
-  function endDrag() {
-    if (!drag.active) return;
-    const movedTowardTarget = drag.x < -90 || Math.hypot(drag.x, drag.y) > 130;
-    setDrag({ active: false, startX: 0, startY: 0, x: 0, y: 0 });
-    if (movedTowardTarget) {
-      act({ type: "snapToRectangle" });
-    }
-  }
+      const rect = svgRef.current?.getBoundingClientRect();
+      const scale = rect ? VIEWBOX.width / rect.width : 1;
+      const delta = { x: moveX * scale, y: moveY * scale };
+      const near = delta.x < -SNAP_DISTANCE || Math.hypot(delta.x, delta.y) > 190;
+
+      if (first && stageRef.current === "idle") {
+        act({ type: "startDraggingCopy" });
+        stageRef.current = "draggingCopy";
+      }
+
+      if (active && near && stageRef.current !== "nearSolution") {
+        act({ type: "approachSolution" });
+        stageRef.current = "nearSolution";
+      }
+
+      if (active && !near && stageRef.current === "nearSolution") {
+        act({ type: "leaveSolution" });
+        stageRef.current = "draggingCopy";
+      }
+
+      setDrag({ active, ...delta, near });
+
+      if (last) {
+        const shouldSnap = near || stageRef.current === "nearSolution";
+        act(shouldSnap ? { type: "snapToRectangle" } : { type: "leaveSolution" });
+        stageRef.current = shouldSnap ? "snapped" : "draggingCopy";
+        setDrag({ active: false, x: 0, y: 0, near: false });
+      }
+    },
+    {
+      eventOptions: { passive: false },
+      pointer: { capture: false },
+      preventDefault: true,
+    },
+  );
 
   return (
-    <div className={`proof-stage is-${state.stage}`} ref={stageRef}>
-      <div className="snap-target">
-        <span>{state.n} × {state.n + 1}</span>
-      </div>
-      {index < 3 ? (
-        <>
-          <div className="proof-object original">
-            <DotTriangle n={state.n} />
-          </div>
-          {index >= 1 && (
-            <div
-              className={`proof-object copy ${state.stage === "flipped" ? "is-draggable" : ""}`}
-              onPointerCancel={endDrag}
-              onPointerDown={beginDrag}
-              onPointerMove={moveDrag}
-              onPointerUp={endDrag}
-              role={state.stage === "flipped" ? "button" : undefined}
-              style={
-                state.stage === "flipped"
-                  ? ({ "--drag-x": `${drag.x}px`, "--drag-y": `${drag.y}px` } as CSSProperties)
-                  : undefined
-              }
-              tabIndex={state.stage === "flipped" ? 0 : undefined}
-            >
-              <DotTriangle n={state.n} ghost={index === 1} flipped={index >= 2} />
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="proof-object joined">
-          <TriangleRectangle n={state.n} measurements={measurements} />
-        </div>
+    <section className={`pp-stage is-${state.stage}`} aria-label="Triangle number gesture proof">
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
+        role="img"
+      >
+        <rect className="pp-stage-bg" x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} rx="28" />
+        <text className="pp-question" x="500" y="54" textAnchor="middle">
+          这堆点有多少个？
+        </text>
+        <g className="pp-target">
+          <rect x={RECT_BOX.x - 34} y={RECT_BOX.y - 34} width={RECT_BOX.width + 68} height={RECT_BOX.height + 68} rx="24" />
+          <text x={RECT_BOX.x + RECT_BOX.width / 2} y={RECT_BOX.y + RECT_BOX.height + 64} textAnchor="middle">
+            {state.n} rows · {state.n + 1} each row
+          </text>
+        </g>
+        {!isLockedRectangle && (
+          <g className="pp-copy-callout">
+            <path d="M 586 94 L 900 94 L 586 464 Z" />
+            <text x="742" y="88" textAnchor="middle">
+              拖这个蓝色副本
+            </text>
+          </g>
+        )}
+        {isRectangle && (
+          <line className="pp-diagonal" x1={RECT_BOX.x} y1={RECT_BOX.y} x2={RECT_BOX.x + RECT_BOX.width} y2={RECT_BOX.y + RECT_BOX.height} />
+        )}
+        {dots.map((dot) => {
+          const x = dot.source === "blue" && drag.active && !isRectangle ? dot.x + drag.x : dot.x;
+          const y = dot.source === "blue" && drag.active && !isRectangle ? dot.y + drag.y : dot.y;
+          return (
+            <circle
+              className={`pp-dot is-${dot.source}`}
+              cx={x}
+              cy={y}
+              key={dot.id}
+              r={state.n > 24 && isRectangle ? 5 : 9}
+            />
+          );
+        })}
+        <text className="pp-hint" x="500" y="526" textAnchor="middle">
+          {stageInstruction(state)}
+        </text>
+      </svg>
+      {!isLockedRectangle && (
+        <button
+          aria-label="拖动蓝色三角形"
+          className="pp-blue-drag-surface"
+          onClick={() => act({ type: "snapToRectangle" })}
+          type="button"
+          {...bindBlueDrag()}
+        />
       )}
-      {index >= 3 && (
-        <div className="rectangle-frame">
-          <span>{measurements.rectangleRows} rows</span>
-          <strong>{measurements.rectangleColumns} each row</strong>
-        </div>
-      )}
-    </div>
+    </section>
   );
 }
 
-function FormulaReveal({ state, measurements }: { state: TriangleNumberState; measurements: TriangleMeasurements }) {
-  if (state.stage === "single") {
-    return <div className="proof-formula is-muted">1 + 2 + ... + {state.n}</div>;
-  }
-  if (state.stage === "duplicated" || state.stage === "flipped") {
-    return <div className="proof-formula">T + T</div>;
-  }
-  if (state.stage === "snapped") {
-    return <div className="proof-formula">2T = {state.n} × {state.n + 1}</div>;
-  }
+function TracePills({ trace }: { trace: TraceEvent<TriangleNumberState, TriangleNumberAction>[] }) {
   return (
-    <div className="proof-formula is-revealed">
-      T = {state.n} × {state.n + 1} ÷ 2 = {measurements.value}
-    </div>
-  );
-}
-
-function ProofControls({ state, act }: { state: TriangleNumberState; act: (action: TriangleNumberAction) => void }) {
-  if (state.stage === "single") {
-    return (
-      <div className="proof-controls is-primary">
-        <button type="button" onClick={() => act({ type: "duplicateTriangle" })}>
-          复制一份
-        </button>
-      </div>
-    );
-  }
-  if (state.stage === "duplicated") {
-    return (
-      <div className="proof-controls is-primary">
-        <button type="button" onClick={() => act({ type: "flipCopy" })}>
-          翻转副本
-        </button>
-      </div>
-    );
-  }
-  if (state.stage === "flipped") {
-    return (
-      <div className="proof-controls is-primary">
-        <button type="button" onClick={() => act({ type: "snapToRectangle" })}>
-          没有鼠标？直接吸附
-        </button>
-      </div>
-    );
-  }
-  if (state.stage === "snapped") {
-    return (
-      <div className="proof-controls is-primary">
-        <button type="button" onClick={() => act({ type: "deriveFormula" })}>
-          看一个三角形
-        </button>
-      </div>
-    );
-  }
-  return (
-    <div className="proof-controls is-primary">
-      <button type="button" onClick={() => act({ type: "reset" })}>
-        再玩一次
-      </button>
-    </div>
-  );
-}
-
-function ProofTrace({ trace }: { trace: TraceEvent<TriangleNumberState, TriangleNumberAction>[] }) {
-  return (
-    <div className="proof-trace" aria-label="Proof trace">
+    <div className="pp-trace" aria-label="Proof trace">
       <span>开始</span>
       {trace.slice(-5).map((event, index) => (
         <span className={event.after.stage === "derived" ? "is-revealed" : ""} key={`${event.timestamp}-${index}`}>
@@ -286,26 +300,35 @@ export default function TriangleNumberHero() {
   const { state, invariantResults, measurements, trace, act } = useHeroStore();
   const invariant = invariantResults[0];
 
+  useEffect(() => {
+    if (state.stage !== "snapped") return undefined;
+    const timer = window.setTimeout(() => act({ type: "startDeriving" }), 850);
+    return () => window.clearTimeout(timer);
+  }, [act, state.stage]);
+
+  useEffect(() => {
+    if (state.stage !== "deriving") return undefined;
+    const timer = window.setTimeout(() => act({ type: "finishDeriving" }), 1200);
+    return () => window.clearTimeout(timer);
+  }, [act, state.stage]);
+
   return (
-    <main className="triangle-hero-shell">
-      <section className="triangle-hero" aria-label="Triangle number playable proof">
-        <header className="triangle-copy">
-          <p className="hero-kicker">Playable Proof</p>
+    <main className="pp-shell">
+      <section className="pp-hero" aria-label="Triangle number playable proof">
+        <header className="pp-copy">
+          <p>Playable Proof</p>
           <h1>{spec.title}</h1>
-          <p>{stageInstruction(state.stage)}</p>
+          <span>{spec.subtitle}</span>
         </header>
-
-        <ProofStage state={state} measurements={measurements} act={act} />
-
-        <section className="proof-panel" aria-label="Proof controls">
-          <FormulaReveal state={state} measurements={measurements} />
-          <div className="proof-invariant">
+        <DotStage state={state} measurements={measurements} act={act} />
+        <section className="pp-controls" aria-label="Proof controls">
+          <div className="pp-formula">{formulaText(state, measurements)}</div>
+          <div className="pp-invariant">
             <span>dot count preserved</span>
             <strong>{invariant.leftValue} = {invariant.rightValue}</strong>
           </div>
-          <ProofControls state={state} act={act} />
-          <div className="proof-slider">
-            <label htmlFor="triangle-n">n = {state.n}</label>
+          <label className="pp-slider" htmlFor="triangle-n">
+            n = {state.n}
             <input
               id="triangle-n"
               max={spec.maxN}
@@ -314,11 +337,13 @@ export default function TriangleNumberHero() {
               type="range"
               value={state.n}
             />
-            <button type="button" onClick={() => act({ type: "setN", n: 100 })}>
-              试试 100 层
-            </button>
+          </label>
+          <div className="pp-buttons">
+            <button type="button" onClick={() => act({ type: "playDemo" })}>看一次</button>
+            <button type="button" onClick={() => act({ type: "reset" })}>重置</button>
+            <button type="button" onClick={() => act({ type: "hundredClimax" })}>试试 100 层</button>
           </div>
-          <ProofTrace trace={trace} />
+          <TracePills trace={trace} />
         </section>
       </section>
     </main>

@@ -12,11 +12,12 @@
     "@math-wild/concept-core": "workspace:*",
     "@math-wild/math-kernel": "workspace:*",
     "@math-wild/math-worlds": "workspace:*",
+    "@use-gesture/react": "^10.3.1",
     "@vitejs/plugin-react": "^5.1.1",
-    "vite": "^7.2.7",
-    "typescript": "^5.9.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.7",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

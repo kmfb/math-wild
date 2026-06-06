@@ -10,7 +10,7 @@ describe("TriangleNumberWorld", () => {
     const state = world.createInitialState();
     const measurement = measureTriangleNumber(state);
 
-    expect(state).toEqual({ n: 8, stage: "single" });
+    expect(state).toEqual({ n: 8, stage: "idle" });
     expect(measurement.triangleDots).toBe(36);
     expect(measurement.rectangleRows).toBe(8);
     expect(measurement.rectangleColumns).toBe(9);
@@ -19,8 +19,8 @@ describe("TriangleNumberWorld", () => {
   it("preserves dot count when snapped into a rectangle", () => {
     const world = new TriangleNumberWorld(spec);
     const events = world.replay(world.createInitialState(), [
-      { type: "duplicateTriangle" },
-      { type: "flipCopy" },
+      { type: "startDraggingCopy" },
+      { type: "approachSolution" },
       { type: "snapToRectangle" },
     ]);
     const last = events.at(-1);
@@ -36,11 +36,9 @@ describe("TriangleNumberWorld", () => {
   it("derives the 100 layer value", () => {
     const world = new TriangleNumberWorld(spec);
     let state = world.createInitialState();
-    state = world.applyAction(state, { type: "setN", n: 100 });
-    state = world.applyAction(state, { type: "duplicateTriangle" });
-    state = world.applyAction(state, { type: "flipCopy" });
-    state = world.applyAction(state, { type: "snapToRectangle" });
-    state = world.applyAction(state, { type: "deriveFormula" });
+    state = world.applyAction(state, { type: "hundredClimax" });
+    state = world.applyAction(state, { type: "startDeriving" });
+    state = world.applyAction(state, { type: "finishDeriving" });
     const measurement = measureTriangleNumber(state);
 
     expect(measurement.value).toBe(5050);
