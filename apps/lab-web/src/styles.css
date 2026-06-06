@@ -758,3 +758,507 @@ h1 {
     transition-duration: 0.01ms !important;
   }
 }
+
+.triangle-hero-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 22% 12%, rgba(249, 115, 22, 0.16), transparent 28%),
+    linear-gradient(180deg, #eef2ff 0%, #fff7ed 100%);
+  color: #1e1b4b;
+}
+
+.triangle-hero {
+  width: min(1180px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-areas:
+    "copy panel"
+    "stage panel";
+  gap: 18px;
+  align-items: stretch;
+}
+
+.triangle-copy {
+  grid-area: copy;
+}
+
+.hero-kicker {
+  color: #f97316;
+  font-size: 0.82rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.triangle-copy h1 {
+  color: #1e1b4b;
+  font-size: clamp(2.6rem, 7vw, 6.8rem);
+  letter-spacing: 0;
+}
+
+.triangle-copy p:not(.hero-kicker) {
+  max-width: 520px;
+  color: #4b466c;
+  font-size: 1.15rem;
+  line-height: 1.55;
+  margin: 12px 0 0;
+}
+
+.proof-stage {
+  grid-area: stage;
+  min-height: 560px;
+  position: relative;
+  border: 4px solid #1e1b4b;
+  border-radius: 22px;
+  background: #fefce8;
+  box-shadow:
+    0 20px 0 #c7d2fe,
+    0 26px 40px rgba(30, 27, 75, 0.18);
+  overflow: hidden;
+}
+
+.proof-stage::after {
+  content: "";
+  position: absolute;
+  inset: 20px;
+  border: 2px dashed rgba(79, 70, 229, 0.18);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.snap-target {
+  position: absolute;
+  left: 14%;
+  top: 10%;
+  width: 72%;
+  height: 76%;
+  display: grid;
+  place-items: end center;
+  border: 3px dashed rgba(79, 70, 229, 0.28);
+  border-radius: 18px;
+  color: rgba(79, 70, 229, 0.68);
+  font-size: 1rem;
+  font-weight: 950;
+  padding: 12px;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+.proof-stage.is-flipped .snap-target {
+  opacity: 1;
+  animation: target-breathe 900ms ease-in-out infinite alternate;
+}
+
+.proof-stage.is-snapped .snap-target,
+.proof-stage.is-derived .snap-target {
+  opacity: 1;
+  animation: none;
+  border-color: rgba(79, 70, 229, 0.58);
+  background: rgba(79, 70, 229, 0.06);
+}
+
+.proof-object {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 460ms cubic-bezier(0.2, 0.78, 0.18, 1),
+    opacity 220ms ease;
+}
+
+.proof-object.original {
+  left: 10%;
+  top: 14%;
+}
+
+.proof-object.copy {
+  left: 52%;
+  top: 14%;
+}
+
+.proof-stage.is-single .proof-object.original {
+  transform: translate(34%, 12%) scale(1.12);
+}
+
+.proof-stage.is-duplicated .proof-object.copy {
+  opacity: 0.52;
+  transform: translateY(18px);
+}
+
+.proof-stage.is-flipped .proof-object.copy {
+  opacity: 0.82;
+  transform: translate(var(--drag-x, 0), var(--drag-y, 0)) translateY(-10px);
+}
+
+.proof-object.copy.is-draggable {
+  cursor: grab;
+  touch-action: none;
+  z-index: 3;
+}
+
+.proof-object.copy.is-draggable:active {
+  cursor: grabbing;
+}
+
+.rectangle-frame {
+  position: absolute;
+  left: 14%;
+  top: 10%;
+  width: 72%;
+  height: 76%;
+  display: grid;
+  place-items: start center;
+  border: 4px solid rgba(79, 70, 229, 0.68);
+  border-radius: 18px;
+  color: #4f46e5;
+  font-weight: 950;
+  padding: 12px;
+  pointer-events: none;
+  animation: proof-pop 360ms ease-out;
+}
+
+.rectangle-frame span {
+  position: absolute;
+  left: -54px;
+  top: 50%;
+  transform: rotate(-90deg) translateX(50%);
+  transform-origin: center;
+  color: #4f46e5;
+  white-space: nowrap;
+}
+
+.rectangle-frame strong {
+  align-self: end;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+}
+
+.dot-triangle {
+  --dot-size: clamp(9px, 1.1vw, 18px);
+  display: grid;
+  gap: clamp(5px, 0.58vw, 10px);
+  justify-items: start;
+  transition:
+    opacity 220ms ease,
+    transform 460ms cubic-bezier(0.2, 0.78, 0.18, 1);
+}
+
+.dot-triangle.is-flipped {
+  justify-items: end;
+}
+
+.dot-triangle.is-ghost {
+  opacity: 0.46;
+}
+
+.dot-triangle.is-abstract {
+  --dot-size: 8px;
+  position: relative;
+  max-height: 360px;
+  overflow: hidden;
+  padding-bottom: 46px;
+}
+
+.dot-triangle.is-abstract strong {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.dot-row {
+  display: flex;
+  justify-content: flex-start;
+  gap: clamp(5px, 0.58vw, 10px);
+  width: 100%;
+}
+
+.dot-triangle.is-flipped .dot-row {
+  justify-content: flex-end;
+}
+
+.dot-triangle.is-flipped .dot {
+  background: #4f46e5;
+}
+
+.dot {
+  width: var(--dot-size, 14px);
+  aspect-ratio: 1;
+  display: inline-block;
+  border: 2px solid #1e1b4b;
+  border-radius: 50%;
+  background: #f97316;
+  box-shadow: 0 4px 0 rgba(30, 27, 75, 0.22);
+}
+
+.proof-object.joined {
+  inset: 8%;
+  width: 84%;
+  height: 84%;
+}
+
+.triangle-rectangle {
+  --dot-size: clamp(8px, 0.86vw, 14px);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--columns), var(--dot-size));
+  gap: clamp(5px, 0.5vw, 9px);
+  place-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  animation: proof-pop 360ms ease-out;
+}
+
+.triangle-rectangle .dot.is-original {
+  background: #f97316;
+}
+
+.triangle-rectangle .dot.is-copy {
+  background: #4f46e5;
+}
+
+.triangle-rectangle.is-abstract {
+  --dot-size: 9px;
+}
+
+.triangle-rectangle strong {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.rectangle-diagonal {
+  position: absolute;
+  left: 18%;
+  top: 9%;
+  width: 64%;
+  height: 82%;
+  border-right: 4px solid rgba(30, 27, 75, 0.58);
+  transform: skewX(-38deg);
+  pointer-events: none;
+}
+
+.proof-panel {
+  grid-area: panel;
+  min-height: 620px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 4px solid #1e1b4b;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow:
+    0 20px 0 #fed7aa,
+    0 26px 40px rgba(30, 27, 75, 0.18);
+  padding: 18px;
+}
+
+.proof-formula {
+  min-height: 112px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #1e1b4b;
+  border-radius: 16px;
+  background: #eef2ff;
+  color: #1e1b4b;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-weight: 950;
+  line-height: 1.1;
+  padding: 14px;
+  text-align: center;
+}
+
+.proof-formula.is-muted {
+  color: #4b466c;
+}
+
+.proof-formula.is-revealed {
+  background: #ffedd5;
+  color: #9a3412;
+  animation: proof-pop 360ms ease-out;
+}
+
+.proof-invariant {
+  display: grid;
+  gap: 8px;
+  border: 2px solid rgba(79, 70, 229, 0.22);
+  border-radius: 16px;
+  background: #eef2ff;
+  padding: 14px;
+}
+
+.proof-invariant span {
+  color: #4f46e5;
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.proof-invariant strong {
+  color: #1e1b4b;
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.proof-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.proof-controls.is-primary {
+  grid-template-columns: 1fr;
+}
+
+.proof-controls button,
+.proof-slider button {
+  border: 3px solid #1e1b4b;
+  background: #f97316;
+  color: #fff7ed;
+  box-shadow: 0 6px 0 #9a3412;
+}
+
+.proof-controls button:hover,
+.proof-slider button:hover {
+  border-color: #1e1b4b;
+  background: #fb923c;
+  transform: translateY(-1px);
+}
+
+.proof-controls button:disabled {
+  cursor: not-allowed;
+  background: #c7d2fe;
+  color: #4b466c;
+  box-shadow: none;
+  transform: none;
+}
+
+.proof-controls.is-primary button {
+  min-height: 58px;
+  font-size: 1.05rem;
+}
+
+.proof-slider {
+  display: grid;
+  gap: 12px;
+  border-top: 2px solid rgba(30, 27, 75, 0.12);
+  padding-top: 16px;
+}
+
+.proof-slider label {
+  color: #1e1b4b;
+  font-size: 1.15rem;
+  font-weight: 950;
+}
+
+.proof-slider input {
+  width: 100%;
+  accent-color: #f97316;
+}
+
+.proof-trace {
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.proof-trace span {
+  border: 2px solid #1e1b4b;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #1e1b4b;
+  font-size: 0.82rem;
+  font-weight: 950;
+  padding: 7px 10px;
+}
+
+.proof-trace span.is-revealed {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+@keyframes proof-pop {
+  0% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes target-breathe {
+  from {
+    box-shadow: inset 0 0 0 rgba(79, 70, 229, 0);
+  }
+  to {
+    box-shadow: inset 0 0 34px rgba(79, 70, 229, 0.14);
+  }
+}
+
+@media (max-width: 940px) {
+  .triangle-hero-shell {
+    padding: 14px;
+    place-items: start center;
+  }
+
+  .triangle-hero {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "copy"
+      "stage"
+      "panel";
+  }
+
+  .proof-stage {
+    min-height: 460px;
+  }
+
+  .proof-panel {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .triangle-copy h1 {
+    font-size: 2.7rem;
+  }
+
+  .proof-stage {
+    min-height: 360px;
+  }
+
+  .proof-object.original {
+    left: 4%;
+    top: 14%;
+  }
+
+  .proof-object.copy {
+    left: 46%;
+    top: 14%;
+  }
+
+  .proof-controls {
+    grid-template-columns: 1fr;
+  }
+}

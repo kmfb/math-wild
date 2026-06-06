@@ -1,5 +1,5 @@
-import EquationLab from "./labs/EquationLab";
+import TriangleNumberHero from "./labs/TriangleNumberHero";
 
 export default function App() {
-  return <EquationLab />;
+  return <TriangleNumberHero />;
 }

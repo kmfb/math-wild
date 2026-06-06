@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./equation-balance": "./src/equation-balance/index.ts"
+    "./equation-balance": "./src/equation-balance/index.ts",
+    "./triangle-number": "./src/triangle-number/index.ts"
   },
   "scripts": {
     "test": "vitest run",

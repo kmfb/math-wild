@@ -12,13 +12,13 @@ distributive_law   → 拆开与分配：公式只是长方形被切开。
 Current lab:
 
 ```text
-apps/lab-web → Equation Lab for x + 3 = 8
+apps/lab-web → Playable Proof Hero for triangle numbers
 ```
 
 ## What this repo does
 
 This repo renders structured math chapters into Manim lesson videos, exports keyframes, composes posters from those keyframes, and writes a per-chapter render report.
-It also includes a React/SVG Equation Lab backed by an invariant-driven math world.
+It also includes a React/SVG playable proof hero backed by math worlds and invariant checks.
 
 ```text
 chapters/<chapter>/chapter_spec.json
@@ -67,7 +67,7 @@ uv run python verify.py --all
 uv run python render.py --all --quality ql
 ```
 
-## Equation Lab
+## Lab Web
 
 ```bash
 pnpm install
@@ -75,13 +75,29 @@ pnpm test
 pnpm dev
 ```
 
-The Lab uses:
+The current hero uses:
+
+```text
+packages/concept-specs/triangle_number_sum.json
+→ packages/math-worlds/triangle-number/
+→ apps/lab-web/src/labs/TriangleNumberHero.tsx
+```
+
+It shows why:
+
+```text
+1 + 2 + ... + n = n(n + 1) / 2
+```
+
+by letting the user duplicate a dot triangle, flip it, snap it into a rectangle, and then derive the formula.
+
+The Equation Lab remains available in source:
 
 ```text
 packages/concept-specs/equation_balance_x_plus_3_eq_8.json
 → packages/math-kernel/
 → packages/math-worlds/equation-balance/
-→ apps/lab-web/
+→ apps/lab-web/src/labs/EquationLab.tsx
 ```
 
 v0.8 makes the Equation Lab invariant-driven:
