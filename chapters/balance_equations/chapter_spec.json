@@ -1,5 +1,6 @@
 {
   "chapter_id": "balance_equations",
+  "concept_spec": "../../packages/concept-specs/equation_balance_x_plus_3_eq_8.json",
   "version": "0.5",
   "title": "平衡与方程",
   "subtitle": "等号不是答案，而是关系",

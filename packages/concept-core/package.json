@@ -1,0 +1,17 @@
+{
+  "name": "@math-wild/concept-core",
+  "version": "0.7.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  }
+}

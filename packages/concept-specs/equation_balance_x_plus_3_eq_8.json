@@ -1,0 +1,74 @@
+{
+  "id": "equation_balance_x_plus_3_eq_8",
+  "type": "equation_balance",
+  "title": "平衡与方程",
+  "equation": "x + 3 = 8",
+  "unknowns": {
+    "x": 5
+  },
+  "initialState": {
+    "left": [
+      {
+        "kind": "unknown",
+        "label": "x",
+        "id": "x1"
+      },
+      {
+        "kind": "unit",
+        "id": "l1"
+      },
+      {
+        "kind": "unit",
+        "id": "l2"
+      },
+      {
+        "kind": "unit",
+        "id": "l3"
+      }
+    ],
+    "right": [
+      {
+        "kind": "unit",
+        "id": "r1"
+      },
+      {
+        "kind": "unit",
+        "id": "r2"
+      },
+      {
+        "kind": "unit",
+        "id": "r3"
+      },
+      {
+        "kind": "unit",
+        "id": "r4"
+      },
+      {
+        "kind": "unit",
+        "id": "r5"
+      },
+      {
+        "kind": "unit",
+        "id": "r6"
+      },
+      {
+        "kind": "unit",
+        "id": "r7"
+      },
+      {
+        "kind": "unit",
+        "id": "r8"
+      }
+    ]
+  },
+  "goalState": {
+    "left": [
+      {
+        "kind": "unknown",
+        "label": "x",
+        "id": "x1"
+      }
+    ],
+    "rightUnitCount": 5
+  }
+}

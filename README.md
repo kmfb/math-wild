@@ -9,9 +9,16 @@ balance_equations  → 平衡与方程：等号不是答案，而是关系。
 distributive_law   → 拆开与分配：公式只是长方形被切开。
 ```
 
+Current lab:
+
+```text
+apps/lab-web → Equation Lab for x + 3 = 8
+```
+
 ## What this repo does
 
 This repo renders structured math chapters into Manim lesson videos, exports keyframes, composes posters from those keyframes, and writes a per-chapter render report.
+It also includes a small React/SVG Equation Lab backed by shared concept specs and pure rule functions.
 
 ```text
 chapters/<chapter>/chapter_spec.json
@@ -58,6 +65,22 @@ uv run python render.py --chapter balance_equations --quality ql
 uv sync
 uv run python verify.py --all
 uv run python render.py --all --quality ql
+```
+
+## Equation Lab
+
+```bash
+pnpm install
+pnpm test
+pnpm dev
+```
+
+The Lab uses:
+
+```text
+packages/concept-specs/equation_balance_x_plus_3_eq_8.json
+→ packages/concept-core/
+→ apps/lab-web/
 ```
 
 Render one chapter:
