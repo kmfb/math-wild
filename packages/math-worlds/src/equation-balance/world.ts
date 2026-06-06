@@ -60,12 +60,30 @@ function withStatus(state: Omit<BalanceState, "status"> | BalanceState, spec: Eq
 
 export function checkEquationInvariants(state: BalanceState): InvariantResult[] {
   const measurement = measureEquation(state);
+  const brokenSide = measurement.delta === 0 ? undefined : measurement.delta < 0 ? "right" : "left";
+  const repairSide = measurement.delta === 0 ? undefined : measurement.delta < 0 ? "right" : "left";
+  const intensity = Math.min(Math.abs(measurement.delta), 4);
   return [
     {
       id: "equation.balance",
       label: "leftTotal = rightTotal",
       ok: measurement.delta === 0,
+      leftValue: measurement.leftTotal,
+      rightValue: measurement.rightTotal,
       delta: measurement.delta,
+      brokenSide,
+      repairSuggestions:
+        repairSide === undefined
+          ? []
+          : [
+              {
+                action: "removeUnit",
+                side: repairSide,
+                count: Math.abs(measurement.delta),
+                reason: "restore invariant",
+              },
+            ],
+      intensity,
       explanation:
         measurement.delta === 0
           ? `left total is ${measurement.leftTotal}, right total is ${measurement.rightTotal}`

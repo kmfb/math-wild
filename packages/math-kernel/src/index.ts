@@ -14,9 +14,21 @@ export type InvariantResult = {
   id: string;
   label: string;
   ok: boolean;
+  leftValue?: number;
+  rightValue?: number;
   delta?: number;
+  brokenSide?: "left" | "right";
+  repairSuggestions?: RepairSuggestion[];
+  intensity?: number;
   explanation: string;
   measurements?: Measurement[];
+};
+
+export type RepairSuggestion = {
+  action: string;
+  side: "left" | "right";
+  count: number;
+  reason: string;
 };
 
 export type Invariant<S> = {

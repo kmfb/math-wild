@@ -104,6 +104,20 @@ world.getFeedback(state)
 trace
 ```
 
+v0.9 makes the invariant visible as interface:
+
+```text
+equation.balance invariant result
+→ Invariant Lens
+→ Equality Beam
+→ Equation Strip
+→ Bar Model
+→ Ghost Repair
+→ Trace Timeline
+```
+
+When `leftTotal = rightTotal` breaks, the relationship object breaks visually. When it is restored, the beam reconnects and every representation updates from the same invariant result.
+
 Render one chapter:
 
 ```bash

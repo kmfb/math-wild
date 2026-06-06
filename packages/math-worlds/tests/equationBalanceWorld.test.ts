@@ -27,7 +27,14 @@ describe("EquationBalanceWorld", () => {
     expect(event.timestamp).toBe(100);
     expect(event.action).toEqual({ type: "removeUnit", side: "left", blockId: "l1" });
     expect(result.ok).toBe(false);
+    expect(result.leftValue).toBe(7);
+    expect(result.rightValue).toBe(8);
     expect(result.delta).toBe(-1);
+    expect(result.brokenSide).toBe("right");
+    expect(result.repairSuggestions).toEqual([
+      { action: "removeUnit", side: "right", count: 1, reason: "restore invariant" },
+    ]);
+    expect(result.intensity).toBe(1);
     expect(result.explanation).toBe("left total is 7, right total is 8");
     expect(event.feedback.kind).toBe("broken-equality");
     expect(event.after.status).toBe("unbalanced");

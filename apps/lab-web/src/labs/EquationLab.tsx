@@ -96,11 +96,118 @@ function feedbackDetail(feedback: Feedback, measurements: EquationMeasurements) 
   return `不变量 restored：left = ${measurements.leftTotal}，right = ${measurements.rightTotal}，delta = 0`;
 }
 
+function equationText(state: BalanceState, invariant: InvariantResult, feedback: Feedback) {
+  const leftUnits = state.left.filter((block) => block.kind === "unit").length;
+  const rightUnits = state.right.filter((block) => block.kind === "unit").length;
+  if (feedback.kind === "reveal" || feedback.kind === "celebration") {
+    return `x = ${rightUnits}`;
+  }
+  const left = leftUnits > 0 ? `x + ${leftUnits}` : "x";
+  const relation = invariant.ok ? "=" : "?";
+  return `${left} ${relation} ${rightUnits}`;
+}
+
+function InvariantLens({ result }: { result: InvariantResult }) {
+  const delta = result.delta ?? 0;
+  return (
+    <section className={`invariant-lens ${result.ok ? "is-ok" : "is-broken"}`} aria-label="Invariant lens">
+      <div className="lens-value">
+        <span>left</span>
+        <strong>{result.leftValue}</strong>
+      </div>
+      <div className="equality-beam" aria-label={result.ok ? "equality connected" : "equality broken"}>
+        <span />
+        <b>{result.ok ? "=" : "!="}</b>
+        <span />
+      </div>
+      <div className="lens-value">
+        <span>right</span>
+        <strong>{result.rightValue}</strong>
+      </div>
+      <div className="lens-delta">delta {delta > 0 ? `+${delta}` : delta}</div>
+    </section>
+  );
+}
+
+function EquationStrip({ state, invariant, feedback }: { state: BalanceState; invariant: InvariantResult; feedback: Feedback }) {
+  return (
+    <section className={`equation-strip ${invariant.ok ? "is-ok" : "is-broken"}`} aria-label="Equation representation">
+      <span>{equationText(state, invariant, feedback)}</span>
+    </section>
+  );
+}
+
+function BarModelView({ result }: { result: InvariantResult }) {
+  const left = Number(result.leftValue ?? 0);
+  const right = Number(result.rightValue ?? 0);
+  const max = Math.max(left, right, 1);
+  return (
+    <section className="bar-model" aria-label="Bar model representation">
+      <div className="bar-row">
+        <span>left</span>
+        <div className="bar-track">
+          <i style={{ width: `${(left / max) * 100}%` }} />
+        </div>
+        <strong>{left}</strong>
+      </div>
+      <div className="bar-row">
+        <span>right</span>
+        <div className="bar-track">
+          <i style={{ width: `${(right / max) * 100}%` }} />
+        </div>
+        <strong>{right}</strong>
+      </div>
+    </section>
+  );
+}
+
+function GhostRepairLayer({ result }: { result: InvariantResult }) {
+  const suggestion = result.repairSuggestions?.[0];
+  if (!suggestion || result.ok) {
+    return <section className="ghost-repair is-idle" aria-label="Repair suggestion">关系稳定</section>;
+  }
+  return (
+    <section className="ghost-repair is-active" aria-label="Repair suggestion">
+      <span className="ghost-line" />
+      <span className="ghost-block" />
+      <strong>{suggestion.side === "right" ? "右侧" : "左侧"} ghost -{suggestion.count}</strong>
+      <em>关系想恢复</em>
+    </section>
+  );
+}
+
+function TraceTimeline({ trace }: { trace: TraceEvent<BalanceState, EquationBalanceAction>[] }) {
+  const nodes = trace.length === 0 ? [] : trace.slice(-6);
+  return (
+    <section className="trace-timeline" aria-label="Trace timeline">
+      <div className="trace-rail">
+        <span className="trace-node is-ok">
+          <b />
+          初始平衡
+        </span>
+        {nodes.map((event, index) => {
+          const invariant = event.invariantResults[0];
+          const isSolved = event.feedback.kind === "reveal" || event.feedback.kind === "celebration";
+          const className = isSolved ? "is-solved" : invariant.ok ? "is-ok" : "is-broken";
+          const action = event.action.type === "removeUnit" ? `${event.action.side === "left" ? "左" : "右"}-1` : event.action.type;
+          return (
+            <span className={`trace-node ${className}`} key={`${event.timestamp}-${index}`}>
+              <b />
+              {action}
+            </span>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default function EquationLab() {
   const { state, invariantResults, feedback, measurements, trace, remove, undo, reset } = useLabStore();
   const specCheck = verifySpec(spec);
   const stateCheck = verifyState(state, spec);
   const status = feedbackClass(feedback);
+  const equalityInvariant = invariantResults[0];
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -176,6 +283,15 @@ export default function EquationLab() {
             </div>
           </aside>
         </div>
+
+        <div className="wonder-grid">
+          <InvariantLens result={equalityInvariant} />
+          <EquationStrip state={state} invariant={equalityInvariant} feedback={feedback} />
+          <BarModelView result={equalityInvariant} />
+          <GhostRepairLayer result={equalityInvariant} />
+        </div>
+
+        <TraceTimeline trace={trace} />
 
         <p className="gesture-hint">拖动单位块到移除区。只拿一边会失衡，左右同减会保持平衡。</p>
       </section>

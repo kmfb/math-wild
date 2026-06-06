@@ -24,11 +24,16 @@ function unitPosition(index: number, side: Side) {
   return { x: baseX + col * 44, y: 304 - row * 42 };
 }
 
-function renderBlocks(blocks: Block[], side: Side, bindBlock: ReturnType<typeof useDragBlock>["bindBlock"]) {
+function renderBlocks(
+  blocks: Block[],
+  side: Side,
+  bindBlock: ReturnType<typeof useDragBlock>["bindBlock"],
+  reveal: boolean,
+) {
   let unitIndex = 0;
   return blocks.map((block) => {
     if (block.kind === "unknown") {
-      return <UnknownBlock key={block.id} x={side === "left" ? 230 : 546} y={304} />;
+      return <UnknownBlock key={block.id} x={side === "left" ? 230 : 546} y={304} reveal={reveal} />;
     }
     const point = unitPosition(unitIndex, side);
     unitIndex += 1;
@@ -41,7 +46,7 @@ function renderBlocks(blocks: Block[], side: Side, bindBlock: ReturnType<typeof 
         style={{ touchAction: "none" }}
         {...events}
       >
-        <UnitBlock x={point.x} y={point.y} active={isDragging} />
+        <UnitBlock x={point.x} y={point.y} active={isDragging} reveal={reveal && side === "right"} />
       </g>
     );
   });
@@ -60,6 +65,7 @@ function svgStatus(feedback: Feedback) {
 export default function BalanceSvg({ state, equation, feedback, measurements, onRemoveUnit }: BalanceSvgProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const isBroken = feedback.kind === "broken-equality" || feedback.kind === "unbalanced";
+  const isReveal = feedback.kind === "reveal" || feedback.kind === "celebration";
   const tilt = isBroken ? (measurements.delta > 0 ? -5 : 5) : 0;
   const statusClass = `balance-svg is-${svgStatus(feedback)}`;
 
@@ -73,8 +79,8 @@ export default function BalanceSvg({ state, equation, feedback, measurements, on
   );
 
   const { bindBlock } = useDragBlock(svgRef, handleDrop);
-  const leftBlocks = useMemo(() => renderBlocks(state.left, "left", bindBlock), [bindBlock, state.left]);
-  const rightBlocks = useMemo(() => renderBlocks(state.right, "right", bindBlock), [bindBlock, state.right]);
+  const leftBlocks = useMemo(() => renderBlocks(state.left, "left", bindBlock, isReveal), [bindBlock, isReveal, state.left]);
+  const rightBlocks = useMemo(() => renderBlocks(state.right, "right", bindBlock, isReveal), [bindBlock, isReveal, state.right]);
 
   return (
     <svg ref={svgRef} className={statusClass} viewBox="0 0 900 560" role="img" aria-label="x plus 3 equals 8 balance lab">
@@ -96,6 +102,29 @@ export default function BalanceSvg({ state, equation, feedback, measurements, on
       <text className="svg-equation" x="450" y="104" textAnchor="middle">
         {equation}
       </text>
+      <g className="svg-equality-core" aria-label="Visible equality invariant">
+        <line className="svg-equality-line left" x1="370" y1="138" x2="430" y2="138" />
+        <line className="svg-equality-line right" x1="470" y1="138" x2="530" y2="138" />
+        <text x="450" y="145" textAnchor="middle">
+          {isBroken ? "?" : "="}
+        </text>
+      </g>
+      {isBroken && (
+        <g className={`svg-ghost-repair is-${measurements.delta < 0 ? "right" : "left"}`}>
+          <line x1={measurements.delta < 0 ? 330 : 570} y1="432" x2={measurements.delta < 0 ? 604 : 296} y2="304" />
+          <rect x={measurements.delta < 0 ? 624 : 252} y="286" width="36" height="36" rx="7" />
+        </g>
+      )}
+      {isReveal && (
+        <g className="svg-reveal-links">
+          {[0, 1, 2, 3, 4].map((index) => (
+            <line key={index} x1="230" y1="304" x2={550 + index * 34} y2={274 + (index % 2) * 34} />
+          ))}
+          <text x="450" y="168" textAnchor="middle">
+            x = 5
+          </text>
+        </g>
+      )}
       <text className="svg-side-label" x="304" y="388" textAnchor="middle">
         left: {measurements.leftTotal}
       </text>
