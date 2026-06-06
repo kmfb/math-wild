@@ -26,11 +26,11 @@ jobs:
       - name: Sync dependencies
         run: uv sync
 
-      - name: Verify and render
-        run: uv run python render_local.py --quality ql
+      - name: Verify chapters
+        run: uv run python verify.py --all
 
-      - name: Check render outputs
-        run: uv run python render_report.py
+      - name: Render chapters
+        run: uv run python render.py --all --quality ql
 
       - name: Upload renders
         uses: actions/upload-artifact@v4
@@ -38,5 +38,3 @@ jobs:
           name: math-wild-renders
           path: |
             renders/
-            verification.json
-            generated/

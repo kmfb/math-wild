@@ -1,6 +1,6 @@
 {
-  "chapter_id": "balance_equations_001",
-  "version": "0.3",
+  "chapter_id": "balance_equations",
+  "version": "0.5",
   "title": "平衡与方程",
   "subtitle": "等号不是答案，而是关系",
   "one_liner": "解方程不是搬家，而是在不破坏平衡的前提下，让隐藏量显现。",
@@ -107,7 +107,7 @@
     "line": "解方程不是搬家，而是保持平衡。"
   },
   "exports": {
-    "video_scene": "GeneratedBalanceEquations",
+    "video_scene": "BalanceEquationScene",
     "keyframe_scenes": [
       "KF01MainBalance",
       "KF02SubtractThree",

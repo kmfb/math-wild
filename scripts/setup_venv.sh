@@ -12,4 +12,4 @@ echo "Activate it with:"
 echo "  source .venv/bin/activate"
 echo
 echo "Then render with:"
-echo "  python render_local.py"
+echo "  python render.py --all --quality ql"

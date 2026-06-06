@@ -32,7 +32,7 @@ bash scripts/push_existing_github_repo.sh git@github.com:USER/REPO.git
 git clone git@github.com:USER/REPO.git
 cd REPO
 uv sync
-uv run python render_local.py --quality ql
+uv run python render.py --all --quality ql
 ```
 
 Outputs will appear in `renders/`.

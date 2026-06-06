@@ -22,7 +22,7 @@ scene spec → compiler → Manim scene → render → keyframes → poster → 
 
 ## 当前证明点
 
-同一个 `chapter_spec.json` 能生成：
+同一个 `chapters/<chapter>/chapter_spec.json` 能生成：
 
 - Manim video scene
 - 6 个 keyframe scenes

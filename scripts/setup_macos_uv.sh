@@ -16,4 +16,4 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 uv sync
-echo "Ready. Run: uv run python render_local.py --quality ql"
+echo "Ready. Run: uv run python render.py --all --quality ql"

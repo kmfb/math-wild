@@ -6,4 +6,4 @@ if [ -d ".venv" ]; then
 fi
 
 export PYTHONPATH="$PWD/src:$PWD:${PYTHONPATH:-}"
-python render_local.py "$@"
+python render.py "$@"

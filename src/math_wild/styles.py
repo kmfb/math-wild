@@ -29,6 +29,6 @@ def default_serif_font():
 
 
 # Override when needed:
-#   MATH_WILD_CJK_FONT="Microsoft YaHei" uv run python render_local.py
+#   MATH_WILD_CJK_FONT="Microsoft YaHei" uv run python render.py --all --quality ql
 CJK_FONT = os.environ.get("MATH_WILD_CJK_FONT", default_cjk_font())
 SERIF_FONT = os.environ.get("MATH_WILD_SERIF_FONT", default_serif_font())

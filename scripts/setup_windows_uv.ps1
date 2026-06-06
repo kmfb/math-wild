@@ -10,4 +10,4 @@ Write-Host ""
 
 uv sync
 Write-Host "Ready. Run:"
-Write-Host "  uv run python render_local.py --quality ql"
+Write-Host "  uv run python render.py --all --quality ql"

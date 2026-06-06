@@ -5,4 +5,4 @@ if (Test-Path ".\.venv\Scripts\Activate.ps1") {
 }
 
 $env:PYTHONPATH = "$PWD\src;$PWD;$env:PYTHONPATH"
-python render_local.py @args
+python render.py @args

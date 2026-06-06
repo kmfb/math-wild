@@ -2,21 +2,23 @@
 
 A Manim-based math visual scene compiler prototype for exploratory math lessons.
 
-Current chapter:
+Current chapters:
 
-> 平衡与方程：等号不是答案，而是关系。
+```text
+balance_equations  → 平衡与方程：等号不是答案，而是关系。
+distributive_law   → 拆开与分配：公式只是长方形被切开。
+```
 
 ## What this repo does
 
-This repo compiles a structured chapter spec into a Manim scene, renders a lesson video, exports keyframes, and composes a poster from those keyframes.
+This repo renders structured math chapters into Manim lesson videos, exports keyframes, composes posters from those keyframes, and writes a per-chapter render report.
 
 ```text
-chapter_spec.json
+chapters/<chapter>/chapter_spec.json
 → verify.py
-→ compile_to_manim.py
-→ generated/balance_equations_scene.py
-→ render_local.py
-→ renders/
+→ chapters/<chapter>/scene.py
+→ render.py
+→ renders/<chapter>/
 ```
 
 ## Install with uv
@@ -25,14 +27,14 @@ chapter_spec.json
 
 ```bash
 bash scripts/setup_macos_uv.sh
-uv run python render_local.py --quality ql
+uv run python render.py --chapter balance_equations --quality ql
 ```
 
 ### Ubuntu / Debian
 
 ```bash
 bash scripts/setup_ubuntu_uv.sh
-uv run python render_local.py --quality ql
+uv run python render.py --chapter balance_equations --quality ql
 ```
 
 ### Windows PowerShell
@@ -47,28 +49,34 @@ Then:
 
 ```powershell
 .\scripts\setup_windows_uv.ps1
-uv run python render_local.py --quality ql
+uv run python render.py --chapter balance_equations --quality ql
 ```
 
 ## Minimal commands
 
 ```bash
 uv sync
-uv run python verify.py
-uv run python compile_to_manim.py chapter_spec.json --out generated/balance_equations_scene.py
-uv run python render_local.py --quality ql
+uv run python verify.py --all
+uv run python render.py --all --quality ql
+```
+
+Render one chapter:
+
+```bash
+uv run python render.py --chapter balance_equations --quality ql
+uv run python render.py --chapter distributive_law --quality ql
 ```
 
 High-quality render:
 
 ```bash
-uv run python render_local.py --quality qh
+uv run python render.py --all --quality qh
 ```
 
 Only render still keyframes and poster:
 
 ```bash
-uv run python render_local.py --quality ql --skip-video
+uv run python render.py --all --quality ql --skip-video
 ```
 
 ## Outputs
@@ -77,15 +85,16 @@ After rendering:
 
 ```text
 renders/
-├─ balance_equations_manim.mp4
-├─ keyframes/
-│  ├─ KF01MainBalance.png
-│  ├─ KF02SubtractThree.png
-│  ├─ KF03XEqualsFive.png
-│  ├─ KF04TwoX.png
-│  ├─ KF05SplitTwoX.png
-│  └─ KF06Summary.png
-└─ balance_equations_poster_from_manim.png
+├─ balance_equations/
+│  ├─ lesson.mp4
+│  ├─ poster.png
+│  ├─ keyframes/
+│  └─ render_report.json
+└─ distributive_law/
+   ├─ lesson.mp4
+   ├─ poster.png
+   ├─ keyframes/
+   └─ render_report.json
 ```
 
 ## Push this repo to GitHub
@@ -114,16 +123,17 @@ After pushing to GitHub, you can run the workflow manually from the Actions tab.
 
 ## Font note
 
-The default CJK font is:
+The default CJK font is platform-aware:
 
 ```text
-Noto Sans CJK SC
+macOS: Heiti SC
+Linux: Noto Sans CJK SC
 ```
 
 Override it when needed:
 
 ```bash
-MATH_WILD_CJK_FONT="Microsoft YaHei" uv run python render_local.py --quality ql
+MATH_WILD_CJK_FONT="Microsoft YaHei" uv run python render.py --all --quality ql
 ```
 
 ## Core principle

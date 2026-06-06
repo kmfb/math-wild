@@ -1,5 +1,5 @@
 {
-  "chapter_id": "distributive_law_001",
+  "chapter_id": "distributive_law",
   "version": "0.4",
   "title": "拆开与分配",
   "subtitle": "公式只是长方形被切开",
@@ -29,7 +29,7 @@
     ]
   },
   "exports": {
-    "video_scene": "DistributiveLawScene",
+    "video_scene": "RectangleSplitScene",
     "keyframe_scenes": [
       "KF01WholeRectangle",
       "KF02HeightWidth",

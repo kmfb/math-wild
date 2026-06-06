@@ -27,7 +27,7 @@ def make_formula(text="3(x + 5) = 3x + 15", size=48):
     return formula_text(text, size=size, color=WHITE)
 
 
-class DistributiveLawScene(Scene):
+class RectangleSplitScene(Scene):
     def construct(self):
         header = area_header()
         title, subtitle = header
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     env["PYTHONPATH"] = SRC + os.pathsep + ROOT + os.pathsep + env.get("PYTHONPATH", "")
     raise SystemExit(
         subprocess.call(
-            [sys.executable, "-m", "manim", "-ql", __file__, "DistributiveLawScene"],
+            [sys.executable, "-m", "manim", "-ql", __file__, "RectangleSplitScene"],
             cwd=ROOT,
             env=env,
         )

@@ -6,19 +6,19 @@ sync:
 	uv sync
 
 verify:
-	uv run python verify.py
+	uv run python verify.py --all
 
 compile:
-	uv run python compile_to_manim.py chapter_spec.json --out generated/balance_equations_scene.py
+	uv run python compile_to_manim.py chapters/balance_equations/chapter_spec.json --out generated/balance_equations_scene.py
 
 render:
-	uv run python render_local.py
+	uv run python render.py --all
 
 render-fast:
-	uv run python render_local.py --quality ql
+	uv run python render.py --all --quality ql
 
 keyframes:
-	uv run python render_local.py --quality ql --skip-video
+	uv run python render.py --all --quality ql --skip-video
 
 clean:
 	rm -rf media renders __pycache__ .pytest_cache
