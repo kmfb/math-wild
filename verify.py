@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import json
 from pathlib import Path
 
@@ -18,8 +19,73 @@ def side_total(items, unknowns):
             raise ValueError(f"Unknown kind: {kind}")
     return total, counts
 
+def verify_rectangle_split(spec, spec_path):
+    scene = spec["scene"]
+    height = int(scene["height"])
+    known_parts = [p for p in scene["width_parts"] if p["kind"] == "known"]
+    unknown_parts = [p for p in scene["width_parts"] if p["kind"] == "unknown"]
+    if len(known_parts) != 1 or len(unknown_parts) != 1:
+        return {
+            "status": "FAIL",
+            "spec": spec_path,
+            "checks": [
+                {
+                    "id": "rectangle_split_parts",
+                    "pass": False,
+                    "reason": "first version requires one unknown width and one known width",
+                }
+            ],
+            "rule": "Rectangle split facts are validated from scene spec before Manim rendering.",
+        }
+
+    known_width = int(known_parts[0]["value"])
+    known_area = height * known_width
+    unknown_label = unknown_parts[0]["label"]
+    expected_equation = f"{height}({unknown_label} + {known_width}) = {height}{unknown_label} + {known_area}"
+    compact_expected = expected_equation.replace(" ", "")
+    compact_actual = scene["equation"].replace(" ", "")
+    area_labels = [area["label"] for area in scene["areas"]]
+
+    checks = [
+        {
+            "id": "known_area",
+            "height": height,
+            "known_width": known_width,
+            "known_area": known_area,
+            "pass": known_area == 15,
+            "reason": f"{height} × {known_width} = {known_area}",
+        },
+        {
+            "id": "structure",
+            "equation": scene["equation"],
+            "expected": expected_equation,
+            "pass": compact_actual == compact_expected,
+            "reason": "whole rectangle expression matches split area expression",
+        },
+        {
+            "id": "area_labels",
+            "labels": area_labels,
+            "expected": [f"{height}{unknown_label}", str(known_area)],
+            "pass": area_labels == [f"{height}{unknown_label}", str(known_area)],
+        },
+    ]
+    return {
+        "status": "PASS" if all(c["pass"] for c in checks) else "FAIL",
+        "spec": spec_path,
+        "checks": checks,
+        "rule": "Rectangle split facts are validated from scene spec before Manim rendering.",
+    }
+
+
 def verify(spec_path="chapter_spec.json", out_path="verification.json"):
     spec = json.loads(Path(spec_path).read_text(encoding="utf-8"))
+
+    if spec.get("scene", {}).get("type") == "rectangle_split":
+        result = verify_rectangle_split(spec, spec_path)
+        Path(out_path).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return result["status"] == "PASS"
+
     unknowns = spec["global_unknowns"]
     checks = []
 
@@ -70,4 +136,8 @@ def verify(spec_path="chapter_spec.json", out_path="verification.json"):
     return result["status"] == "PASS"
 
 if __name__ == "__main__":
-    raise SystemExit(0 if verify() else 1)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("spec", nargs="?", default="chapter_spec.json")
+    ap.add_argument("--out", default="verification.json")
+    args = ap.parse_args()
+    raise SystemExit(0 if verify(args.spec, args.out) else 1)
