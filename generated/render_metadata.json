@@ -1,0 +1,13 @@
+{
+  "generated_scene": "generated/balance_equations_scene.py",
+  "video_scene": "GeneratedBalanceEquations",
+  "keyframe_scenes": [
+    "KF01MainBalance",
+    "KF02SubtractThree",
+    "KF03XEqualsFive",
+    "KF04TwoX",
+    "KF05SplitTwoX",
+    "KF06Summary"
+  ],
+  "source_spec": "chapter_spec.json"
+}

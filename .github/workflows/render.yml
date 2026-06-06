@@ -1,0 +1,39 @@
+name: Render Math Wild Lesson
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg build-essential pkg-config libcairo2-dev libpango1.0-dev fonts-noto-cjk fonts-dejavu
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Verify and render
+        run: uv run python render_local.py --quality ql
+
+      - name: Upload renders
+        uses: actions/upload-artifact@v4
+        with:
+          name: math-wild-renders
+          path: |
+            renders/
+            verification.json
+            generated/

@@ -1,0 +1,11 @@
+{
+  "syntax_check": {
+    "render_local.py": "PASS",
+    "compile_to_manim.py": "PASS",
+    "verify.py": "PASS",
+    "poster_composer.py": "PASS",
+    "generated/balance_equations_scene.py": "PASS"
+  },
+  "verify_and_compile": "PASS",
+  "uv_ready": true
+}
