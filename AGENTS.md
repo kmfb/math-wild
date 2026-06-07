@@ -87,6 +87,10 @@ The engine serves the experience and formal lines. Do not let architecture come 
 - Less instruction, more invitation.
 - First create wonder, then make it rigorous.
 - A concept is not done until the learner can state the revelation sentence.
+- Do not display a proof. Design a situation where the learner discovers the proof.
+- The learner must meet friction before seeing the shortcut.
+- The learner must trigger the structure by acting, not by watching.
+- Formulas must be compressed from object behavior.
 
 ## Concept Design Doc
 
@@ -136,6 +140,33 @@ The triangle-number Hero should be judged by this audit:
 - Can a new learner say the revelation sentence after 60 seconds?
 
 If any item fails, fix that item before adding new chapters, new engines, or new visual polish.
+
+## Discovery Mechanics
+
+Wonder Loop order is not enough. The learner must feel ownership of the discovery.
+
+For a playable proof, design mechanics where:
+
+- Wrong placement has visible consequences.
+- Near-correct placement creates partial structural feedback.
+- Correct placement makes the structure snap into view.
+- Numbers appear before variables.
+- The learner first reads concrete rows, then sees the general formula.
+- Transfer answers the opening question instead of acting like an extra feature.
+
+For triangle numbers, the intended discovery path is:
+
+```text
+100 layers feels too large to count
+-> try 8 layers
+-> drag an identical shadow
+-> wrong placement does not make rows line up
+-> near placement shows row pairs like 1 + 8, 2 + 7, 3 + 6
+-> snap makes every row equally long
+-> concrete compression: two triangles = 8 rows x 9
+-> one triangle = half
+-> return to 100 layers: 100 x 101 / 2 = 5050
+```
 
 ## Development Guidance
 

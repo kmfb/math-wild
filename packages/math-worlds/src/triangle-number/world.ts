@@ -13,6 +13,7 @@ const STAGE_ORDER: TriangleStage[] = [
   "draggingCopy",
   "nearSolution",
   "snapped",
+  "readingRows",
   "deriving",
   "derived",
   "hundredClimax",
@@ -40,7 +41,7 @@ export function measureTriangleNumber(state: TriangleNumberState): TriangleMeasu
 
 export function checkTriangleInvariants(state: TriangleNumberState): InvariantResult[] {
   const measurement = measureTriangleNumber(state);
-  const rectangleVisible = ["nearSolution", "snapped", "deriving", "derived", "hundredClimax"].includes(state.stage);
+  const rectangleVisible = ["nearSolution", "snapped", "readingRows", "deriving", "derived", "hundredClimax"].includes(state.stage);
   const ok = !rectangleVisible || measurement.doubledDots === measurement.rectangleDots;
   return [
     {
@@ -70,8 +71,9 @@ function nextStageFor(action: TriangleNumberAction, current: TriangleStage): Tri
   if (action.type === "approachSolution") return "nearSolution";
   if (action.type === "leaveSolution") return current === "nearSolution" ? "draggingCopy" : current;
   if (action.type === "snapToRectangle") return current === "nearSolution" || current === "draggingCopy" ? "snapped" : current;
-  if (action.type === "startDeriving") return current === "snapped" || current === "hundredClimax" ? "deriving" : current;
-  if (action.type === "finishDeriving") return current === "deriving" || current === "snapped" ? "derived" : current;
+  if (action.type === "finishRowDiscovery") return current === "snapped" ? "readingRows" : current;
+  if (action.type === "startDeriving") return current === "readingRows" || current === "hundredClimax" ? "deriving" : current;
+  if (action.type === "finishDeriving") return current === "deriving" ? "derived" : current;
   if (action.type === "hundredClimax") return "hundredClimax";
   if (action.type === "playDemo") return "snapped";
   return current;
@@ -116,7 +118,7 @@ export class TriangleNumberWorld implements MathWorld<TriangleNumberState, Trian
         message: `T = ${measurement.n} × ${measurement.n + 1} ÷ 2 = ${measurement.value}`,
       };
     }
-    if (state.stage === "snapped" || state.stage === "deriving") {
+    if (state.stage === "snapped" || state.stage === "readingRows" || state.stage === "deriving") {
       return {
         kind: "balanced",
         intensity: 0.8,

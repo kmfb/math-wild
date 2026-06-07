@@ -4,6 +4,7 @@ export type TriangleStage =
   | "draggingCopy"
   | "nearSolution"
   | "snapped"
+  | "readingRows"
   | "deriving"
   | "derived"
   | "hundredClimax";
@@ -30,6 +31,7 @@ export type TriangleNumberAction =
   | { type: "leaveSolution" }
   | { type: "approachSolution" }
   | { type: "snapToRectangle" }
+  | { type: "finishRowDiscovery" }
   | { type: "startDeriving" }
   | { type: "finishDeriving" }
   | { type: "hundredClimax" }

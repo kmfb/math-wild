@@ -27,6 +27,7 @@ type HeroStore = {
 type VisualDot = {
   id: string;
   source: "orange" | "blue";
+  row: number;
   x: number;
   y: number;
 };
@@ -40,6 +41,7 @@ const SNAP_DISTANCE = 145;
 const RECTANGLE_STAGES: TriangleNumberState["stage"][] = [
   "nearSolution",
   "snapped",
+  "readingRows",
   "deriving",
   "derived",
   "hundredClimax",
@@ -47,6 +49,7 @@ const RECTANGLE_STAGES: TriangleNumberState["stage"][] = [
 
 const LOCKED_RECTANGLE_STAGES: TriangleNumberState["stage"][] = [
   "snapped",
+  "readingRows",
   "deriving",
   "derived",
   "hundredClimax",
@@ -76,14 +79,15 @@ const useHeroStore = create<HeroStore>((set) => ({
 }));
 
 function stageInstruction(state: TriangleNumberState) {
-  if (state.stage === "idle") return "如果一层一层数，100 层会很慢。";
-  if (state.stage === "invitingCopy") return "如果有另一个一样的三角形呢？拖动蓝色影子。";
-  if (state.stage === "draggingCopy") return "继续拖。靠近虚线矩形时，它会自己对齐。";
-  if (state.stage === "nearSolution") return "对，就是这里。松手吸附。";
-  if (state.stage === "snapped") return "每一行都补齐成 n + 1 个点。";
-  if (state.stage === "deriving") return "读这个长方形：n 行，每行 n + 1。";
-  if (state.stage === "hundredClimax") return "100 层不用数。它也是一个长方形的一半。";
-  return "一个三角形，就是这个长方形的一半。";
+  if (state.stage === "idle") return "100 层太大了。先用 8 层找一个诀窍。";
+  if (state.stage === "invitingCopy") return "拖动蓝色影子。别管公式，先看它能不能补齐每一行。";
+  if (state.stage === "draggingCopy") return "这里还没对齐：有的行长，有的行短。";
+  if (state.stage === "nearSolution") return "快到了。看前几行：1+8、2+7、3+6 都在变成一样长。";
+  if (state.stage === "snapped") return "吸住了。现在读几行，看看它到底为什么整齐。";
+  if (state.stage === "readingRows") return "扫过任意一行，看看橙色和蓝色加起来是不是一样。";
+  if (state.stage === "deriving") return "现在把你看到的行，压缩成乘法。";
+  if (state.stage === "hundredClimax") return "回到开场问题：100 层也不用数。";
+  return "两个一样的三角形拼起来，每一行都一样长。";
 }
 
 function actionLabel(action: TriangleNumberAction) {
@@ -91,6 +95,7 @@ function actionLabel(action: TriangleNumberAction) {
   if (action.type === "startDraggingCopy") return "拖动";
   if (action.type === "approachSolution") return "靠近";
   if (action.type === "snapToRectangle") return "吸附";
+  if (action.type === "finishRowDiscovery") return "读行";
   if (action.type === "startDeriving") return "读长方形";
   if (action.type === "finishDeriving") return "公式浮现";
   if (action.type === "hundredClimax") return "100 层";
@@ -120,7 +125,7 @@ function buildDots(n: number, stage: TriangleNumberState["stage"]): VisualDot[] 
       const point = isRectangle
         ? gridPoint(row, column, n, rectangleColumns, RECT_BOX)
         : gridPoint(row, column, n, n, ORANGE_BOX);
-      dots.push({ id: `orange-${row}-${column}`, source: "orange", ...point });
+      dots.push({ id: `orange-${row}-${column}`, source: "orange", row, ...point });
     }
   }
 
@@ -131,7 +136,7 @@ function buildDots(n: number, stage: TriangleNumberState["stage"]): VisualDot[] 
         const point = isRectangle
           ? gridPoint(row, rectangleColumn, n, rectangleColumns, RECT_BOX)
           : gridPoint(row, index, n, n, BLUE_BOX);
-        dots.push({ id: `blue-${row}-${index}`, source: "blue", ...point });
+        dots.push({ id: `blue-${row}-${index}`, source: "blue", row, ...point });
       }
     }
   }
@@ -148,6 +153,7 @@ function buildDenseDots(): VisualDot[] {
       return {
         id: `dense-${row}-${column}`,
         source: column <= row ? "orange" : "blue",
+        row,
         ...point,
       } satisfies VisualDot;
     }),
@@ -156,15 +162,36 @@ function buildDenseDots(): VisualDot[] {
 
 function formulaText(state: TriangleNumberState, measurements: TriangleMeasurements) {
   if (state.stage === "idle") {
-    return `${state.n} 层还好，100 层呢？`;
+    return "100 层一共有多少个点？";
   }
   if (state.stage === "invitingCopy" || state.stage === "draggingCopy" || state.stage === "nearSolution") {
-    return "两个一样的三角形会变成什么？";
+    return "先试 8 层：找一个不用数的办法";
   }
-  if (state.stage === "snapped") return `每行 ${state.n + 1} 个点`;
-  if (state.stage === "deriving") return `${state.n} 行，每行 ${state.n + 1} 个`;
+  if (state.stage === "snapped" || state.stage === "readingRows") return `1+${state.n} = ${state.n + 1}, 2+${state.n - 1} = ${state.n + 1}, 3+${state.n - 2} = ${state.n + 1}`;
+  if (state.stage === "deriving") return `两份三角形 = ${state.n} 行 × ${state.n + 1} 个`;
   if (state.stage === "hundredClimax") return "1 + 2 + ... + 100 = 5050";
-  return `一个三角形 = ${state.n} × ${state.n + 1} ÷ 2 = ${measurements.value}`;
+  return `两份 = ${state.n} × ${state.n + 1}，一份 = ${measurements.value}`;
+}
+
+function compressionSteps(state: TriangleNumberState, measurements: TriangleMeasurements) {
+  if (state.stage === "snapped" || state.stage === "readingRows") {
+    return [`每一行都是 ${state.n + 1}`, `一共有 ${state.n} 行`];
+  }
+  if (state.stage === "deriving") {
+    return [`两份三角形 = ${state.n} × ${state.n + 1}`, `${state.n} × ${state.n + 1} = ${measurements.doubledDots}`];
+  }
+  if (state.stage === "derived") {
+    return [
+      `两份三角形 = ${state.n} × ${state.n + 1}`,
+      `一份三角形 = ${state.n} × ${state.n + 1} ÷ 2`,
+      `1 + 2 + ... + ${state.n} = ${measurements.value}`,
+      "1 + 2 + ... + n = n(n + 1) / 2",
+    ];
+  }
+  if (state.stage === "hundredClimax") {
+    return ["现在回到 100 层", "两份 = 100 × 101 = 10100", "一份 = 10100 ÷ 2 = 5050"];
+  }
+  return [];
 }
 
 function DotStage({
@@ -179,9 +206,12 @@ function DotStage({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const stageRef = useRef(state.stage);
   const [drag, setDrag] = useState({ active: false, x: 0, y: 0, near: false });
+  const [activeRow, setActiveRow] = useState(0);
   const isRectangle = RECTANGLE_STAGES.includes(state.stage);
   const isLockedRectangle = LOCKED_RECTANGLE_STAGES.includes(state.stage);
   const copyVisible = state.stage !== "idle";
+  const rowDiscoveryVisible = state.stage === "nearSolution" || state.stage === "snapped" || state.stage === "readingRows" || state.stage === "deriving" || state.stage === "derived";
+  const rowAutoSweep = state.stage === "readingRows";
   const dots = useMemo(() => {
     if (state.n > 24 && isRectangle) return buildDenseDots();
     return buildDots(state.n, state.stage);
@@ -190,6 +220,17 @@ function DotStage({
   useEffect(() => {
     stageRef.current = state.stage;
   }, [state.stage]);
+
+  useEffect(() => {
+    if (!rowAutoSweep) return undefined;
+    const rowCount = Math.min(state.n, 4);
+    setActiveRow(0);
+    const timers = Array.from({ length: rowCount - 1 }, (_, index) =>
+      window.setTimeout(() => setActiveRow(index + 1), 620 * (index + 1)),
+    );
+    timers.push(window.setTimeout(() => act({ type: "startDeriving" }), 620 * rowCount + 420));
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [act, rowAutoSweep, state.n, state.stage]);
 
   const bindBlueDrag = useDrag(
     ({ active, first, last, movement: [moveX, moveY], cancel }) => {
@@ -243,10 +284,10 @@ function DotStage({
       >
         <rect className="pp-stage-bg" x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} rx="28" />
         <text className="pp-question" x="500" y="54" textAnchor="middle">
-          这堆点有多少个？
+          100 层一共有多少个点？
         </text>
         <text className="pp-subquestion" x="500" y="92" textAnchor="middle">
-          {state.stage === "idle" ? "别急着数。先找一种换看法。" : "两个一样的三角形，能不能补成更容易数的东西？"}
+          {state.stage === "idle" ? "别数。先用 8 层找一个诀窍。" : "不要急着看公式，先看每一行有没有补齐。"}
         </text>
         <g className="pp-target">
           <rect x={RECT_BOX.x - 34} y={RECT_BOX.y - 34} width={RECT_BOX.width + 68} height={RECT_BOX.height + 68} rx="24" />
@@ -265,7 +306,32 @@ function DotStage({
         {isRectangle && (
           <line className="pp-diagonal" x1={RECT_BOX.x} y1={RECT_BOX.y} x2={RECT_BOX.x + RECT_BOX.width} y2={RECT_BOX.y + RECT_BOX.height} />
         )}
-        {(state.stage === "snapped" || state.stage === "deriving" || state.stage === "derived" || state.stage === "hundredClimax") && (
+        {rowDiscoveryVisible && (
+          <g className="pp-row-discovery">
+            {Array.from({ length: Math.min(state.n, 4) }, (_, row) => {
+              const y = gridPoint(row, 0, state.n, state.n + 1, RECT_BOX).y;
+              return (
+                <g
+                  className={row === activeRow ? "is-active" : ""}
+                  key={row}
+                  onMouseEnter={() => setActiveRow(row)}
+                >
+                  <rect
+                    x={RECT_BOX.x - 14}
+                    y={y - 17}
+                    width={RECT_BOX.width + 28}
+                    height="34"
+                    rx="17"
+                  />
+                  <text x={RECT_BOX.x + RECT_BOX.width + 92} y={y + 7} textAnchor="middle">
+                    {row + 1} + {state.n - row} = {state.n + 1}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        )}
+        {(rowDiscoveryVisible || state.stage === "hundredClimax") && (
           <g className="pp-rectangle-readout">
             <path d={`M ${RECT_BOX.x - 24} ${RECT_BOX.y} L ${RECT_BOX.x - 24} ${RECT_BOX.y + RECT_BOX.height}`} />
             <path d={`M ${RECT_BOX.x} ${RECT_BOX.y - 24} L ${RECT_BOX.x + RECT_BOX.width} ${RECT_BOX.y - 24}`} />
@@ -282,7 +348,7 @@ function DotStage({
           const y = dot.source === "blue" && drag.active && !isRectangle ? dot.y + drag.y : dot.y;
           return (
             <circle
-              className={`pp-dot is-${dot.source}`}
+              className={`pp-dot is-${dot.source} ${rowDiscoveryVisible && dot.row === activeRow ? "is-active-row" : ""}`}
               cx={x}
               cy={y}
               key={dot.id}
@@ -332,7 +398,7 @@ export default function TriangleNumberHero() {
 
   useEffect(() => {
     if (state.stage !== "snapped") return undefined;
-    const timer = window.setTimeout(() => act({ type: "startDeriving" }), 850);
+    const timer = window.setTimeout(() => act({ type: "finishRowDiscovery" }), 450);
     return () => window.clearTimeout(timer);
   }, [act, state.stage]);
 
@@ -353,6 +419,11 @@ export default function TriangleNumberHero() {
         <DotStage state={state} measurements={measurements} act={act} />
         <section className="pp-controls" aria-label="Proof controls">
           <div className="pp-formula">{formulaText(state, measurements)}</div>
+          <div className="pp-compression" aria-label="Formula compression steps">
+            {compressionSteps(state, measurements).map((step) => (
+              <span key={step}>{step}</span>
+            ))}
+          </div>
           <div className="pp-invariant">
             <span>dot count preserved</span>
             <strong>{invariant.leftValue} = {invariant.rightValue}</strong>

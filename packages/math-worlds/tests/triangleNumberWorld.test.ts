@@ -34,6 +34,26 @@ describe("TriangleNumberWorld", () => {
     expect(last?.feedback.message).toBe("两个三角形拼成 8 × 9 的长方形");
   });
 
+  it("uses an explicit row-reading stage before deriving the formula", () => {
+    const world = new TriangleNumberWorld(spec);
+    let state = world.createInitialState();
+
+    state = world.applyAction(state, { type: "revealCopy" });
+    state = world.applyAction(state, { type: "startDraggingCopy" });
+    state = world.applyAction(state, { type: "approachSolution" });
+    state = world.applyAction(state, { type: "snapToRectangle" });
+    expect(state.stage).toBe("snapped");
+
+    state = world.applyAction(state, { type: "finishRowDiscovery" });
+    expect(state.stage).toBe("readingRows");
+
+    state = world.applyAction(state, { type: "startDeriving" });
+    expect(state.stage).toBe("deriving");
+
+    state = world.applyAction(state, { type: "finishDeriving" });
+    expect(state.stage).toBe("derived");
+  });
+
   it("reveals the copy before the drag puzzle starts", () => {
     const world = new TriangleNumberWorld(spec);
     let state = world.createInitialState();
