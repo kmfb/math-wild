@@ -9,6 +9,7 @@ import type {
 
 const STAGE_ORDER: TriangleStage[] = [
   "idle",
+  "invitingCopy",
   "draggingCopy",
   "nearSolution",
   "snapped",
@@ -64,7 +65,8 @@ export function checkTriangleInvariants(state: TriangleNumberState): InvariantRe
 }
 
 function nextStageFor(action: TriangleNumberAction, current: TriangleStage): TriangleStage {
-  if (action.type === "startDraggingCopy") return "draggingCopy";
+  if (action.type === "revealCopy") return current === "idle" ? "invitingCopy" : current;
+  if (action.type === "startDraggingCopy") return current === "idle" || current === "invitingCopy" ? "draggingCopy" : current;
   if (action.type === "approachSolution") return "nearSolution";
   if (action.type === "leaveSolution") return current === "nearSolution" ? "draggingCopy" : current;
   if (action.type === "snapToRectangle") return current === "nearSolution" || current === "draggingCopy" ? "snapped" : current;
@@ -124,7 +126,7 @@ export class TriangleNumberWorld implements MathWorld<TriangleNumberState, Trian
     return {
       kind: "ghost-action",
       intensity: STAGE_ORDER.indexOf(state.stage) / (STAGE_ORDER.length - 1),
-      message: "别数。换个看法。",
+      message: state.stage === "idle" ? "先感受数下去有多笨。" : "如果有另一个一样的三角形呢？",
     };
   }
 

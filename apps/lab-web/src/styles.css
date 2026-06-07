@@ -1349,6 +1349,12 @@ h1 {
   font-weight: 950;
 }
 
+.pp-subquestion {
+  fill: #4b466c;
+  font-size: 18px;
+  font-weight: 850;
+}
+
 .pp-target {
   opacity: 0;
   transition: opacity 180ms ease;
@@ -1385,6 +1391,7 @@ h1 {
   fill: rgba(79, 70, 229, 0.08);
   stroke: rgba(79, 70, 229, 0.58);
   stroke-width: 5;
+  animation: copy-pulse 1800ms ease-in-out infinite;
 }
 
 .pp-copy-callout text {
@@ -1457,10 +1464,27 @@ h1 {
   animation: row-sweep 900ms ease-in-out;
 }
 
+.pp-stage.is-hundredClimax .pp-dot {
+  animation: star-field-pulse 1200ms ease-in-out infinite;
+}
+
 .pp-diagonal {
   stroke: rgba(30, 27, 75, 0.58);
   stroke-linecap: round;
   stroke-width: 5;
+}
+
+.pp-rectangle-readout path {
+  fill: none;
+  stroke: #f97316;
+  stroke-linecap: round;
+  stroke-width: 6;
+}
+
+.pp-rectangle-readout text {
+  fill: #9a3412;
+  font-size: 22px;
+  font-weight: 950;
 }
 
 .pp-hint {
@@ -1571,6 +1595,28 @@ h1 {
 .pp-trace span.is-revealed {
   background: #ffedd5;
   color: #9a3412;
+}
+
+@keyframes copy-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes star-field-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+    opacity: 0.72;
+  }
+  50% {
+    filter: brightness(1.25);
+    opacity: 0.96;
+  }
 }
 
 @media (max-width: 940px) {

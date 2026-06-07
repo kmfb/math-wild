@@ -1,5 +1,6 @@
 export type TriangleStage =
   | "idle"
+  | "invitingCopy"
   | "draggingCopy"
   | "nearSolution"
   | "snapped"
@@ -24,6 +25,7 @@ export type TriangleNumberState = {
 
 export type TriangleNumberAction =
   | { type: "setN"; n: number }
+  | { type: "revealCopy" }
   | { type: "startDraggingCopy" }
   | { type: "leaveSolution" }
   | { type: "approachSolution" }

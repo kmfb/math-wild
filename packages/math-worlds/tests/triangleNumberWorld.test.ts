@@ -19,6 +19,7 @@ describe("TriangleNumberWorld", () => {
   it("preserves dot count when snapped into a rectangle", () => {
     const world = new TriangleNumberWorld(spec);
     const events = world.replay(world.createInitialState(), [
+      { type: "revealCopy" },
       { type: "startDraggingCopy" },
       { type: "approachSolution" },
       { type: "snapToRectangle" },
@@ -31,6 +32,17 @@ describe("TriangleNumberWorld", () => {
     expect(invariant?.leftValue).toBe(72);
     expect(invariant?.rightValue).toBe(72);
     expect(last?.feedback.message).toBe("两个三角形拼成 8 × 9 的长方形");
+  });
+
+  it("reveals the copy before the drag puzzle starts", () => {
+    const world = new TriangleNumberWorld(spec);
+    let state = world.createInitialState();
+
+    state = world.applyAction(state, { type: "revealCopy" });
+    expect(state.stage).toBe("invitingCopy");
+
+    state = world.applyAction(state, { type: "startDraggingCopy" });
+    expect(state.stage).toBe("draggingCopy");
   });
 
   it("derives the 100 layer value", () => {

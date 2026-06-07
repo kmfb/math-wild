@@ -76,7 +76,8 @@ const useHeroStore = create<HeroStore>((set) => ({
 }));
 
 function stageInstruction(state: TriangleNumberState) {
-  if (state.stage === "idle") return "拖动蓝色三角形，让它补到橙色旁边。";
+  if (state.stage === "idle") return "如果一层一层数，100 层会很慢。";
+  if (state.stage === "invitingCopy") return "如果有另一个一样的三角形呢？拖动蓝色影子。";
   if (state.stage === "draggingCopy") return "继续拖。靠近虚线矩形时，它会自己对齐。";
   if (state.stage === "nearSolution") return "对，就是这里。松手吸附。";
   if (state.stage === "snapped") return "每一行都补齐成 n + 1 个点。";
@@ -86,6 +87,7 @@ function stageInstruction(state: TriangleNumberState) {
 }
 
 function actionLabel(action: TriangleNumberAction) {
+  if (action.type === "revealCopy") return "出现副本";
   if (action.type === "startDraggingCopy") return "拖动";
   if (action.type === "approachSolution") return "靠近";
   if (action.type === "snapToRectangle") return "吸附";
@@ -109,6 +111,7 @@ function gridPoint(row: number, column: number, rows: number, columns: number, b
 
 function buildDots(n: number, stage: TriangleNumberState["stage"]): VisualDot[] {
   const isRectangle = RECTANGLE_STAGES.includes(stage);
+  const copyVisible = stage !== "idle";
   const dots: VisualDot[] = [];
   const rectangleColumns = n + 1;
 
@@ -121,13 +124,15 @@ function buildDots(n: number, stage: TriangleNumberState["stage"]): VisualDot[] 
     }
   }
 
-  for (let row = 0; row < n; row += 1) {
-    for (let index = 0; index < n - row; index += 1) {
-      const rectangleColumn = row + 1 + index;
-      const point = isRectangle
-        ? gridPoint(row, rectangleColumn, n, rectangleColumns, RECT_BOX)
-        : gridPoint(row, index, n, n, BLUE_BOX);
-      dots.push({ id: `blue-${row}-${index}`, source: "blue", ...point });
+  if (copyVisible) {
+    for (let row = 0; row < n; row += 1) {
+      for (let index = 0; index < n - row; index += 1) {
+        const rectangleColumn = row + 1 + index;
+        const point = isRectangle
+          ? gridPoint(row, rectangleColumn, n, rectangleColumns, RECT_BOX)
+          : gridPoint(row, index, n, n, BLUE_BOX);
+        dots.push({ id: `blue-${row}-${index}`, source: "blue", ...point });
+      }
     }
   }
 
@@ -150,13 +155,16 @@ function buildDenseDots(): VisualDot[] {
 }
 
 function formulaText(state: TriangleNumberState, measurements: TriangleMeasurements) {
-  if (state.stage === "idle" || state.stage === "draggingCopy" || state.stage === "nearSolution") {
-    return `1 + 2 + ... + ${state.n}`;
+  if (state.stage === "idle") {
+    return `${state.n} 层还好，100 层呢？`;
+  }
+  if (state.stage === "invitingCopy" || state.stage === "draggingCopy" || state.stage === "nearSolution") {
+    return "两个一样的三角形会变成什么？";
   }
   if (state.stage === "snapped") return `每行 ${state.n + 1} 个点`;
-  if (state.stage === "deriving") return `两个三角形 = ${state.n} × ${state.n + 1}`;
-  if (state.stage === "hundredClimax") return "100 × 101 ÷ 2 = 5050";
-  return `1 + 2 + ... + ${state.n} = ${measurements.value}`;
+  if (state.stage === "deriving") return `${state.n} 行，每行 ${state.n + 1} 个`;
+  if (state.stage === "hundredClimax") return "1 + 2 + ... + 100 = 5050";
+  return `一个三角形 = ${state.n} × ${state.n + 1} ÷ 2 = ${measurements.value}`;
 }
 
 function DotStage({
@@ -173,6 +181,7 @@ function DotStage({
   const [drag, setDrag] = useState({ active: false, x: 0, y: 0, near: false });
   const isRectangle = RECTANGLE_STAGES.includes(state.stage);
   const isLockedRectangle = LOCKED_RECTANGLE_STAGES.includes(state.stage);
+  const copyVisible = state.stage !== "idle";
   const dots = useMemo(() => {
     if (state.n > 24 && isRectangle) return buildDenseDots();
     return buildDots(state.n, state.stage);
@@ -194,7 +203,7 @@ function DotStage({
       const delta = { x: moveX * scale, y: moveY * scale };
       const near = delta.x < -SNAP_DISTANCE || Math.hypot(delta.x, delta.y) > 190;
 
-      if (first && stageRef.current === "idle") {
+      if (first && (stageRef.current === "idle" || stageRef.current === "invitingCopy")) {
         act({ type: "startDraggingCopy" });
         stageRef.current = "draggingCopy";
       }
@@ -236,22 +245,37 @@ function DotStage({
         <text className="pp-question" x="500" y="54" textAnchor="middle">
           这堆点有多少个？
         </text>
+        <text className="pp-subquestion" x="500" y="92" textAnchor="middle">
+          {state.stage === "idle" ? "别急着数。先找一种换看法。" : "两个一样的三角形，能不能补成更容易数的东西？"}
+        </text>
         <g className="pp-target">
           <rect x={RECT_BOX.x - 34} y={RECT_BOX.y - 34} width={RECT_BOX.width + 68} height={RECT_BOX.height + 68} rx="24" />
           <text x={RECT_BOX.x + RECT_BOX.width / 2} y={RECT_BOX.y + RECT_BOX.height + 64} textAnchor="middle">
-            {state.n} rows · {state.n + 1} each row
+            {state.n} 行 · 每行 {state.n + 1}
           </text>
         </g>
-        {!isLockedRectangle && (
+        {copyVisible && !isLockedRectangle && (
           <g className="pp-copy-callout">
             <path d="M 586 94 L 900 94 L 586 464 Z" />
             <text x="742" y="88" textAnchor="middle">
-              拖这个蓝色副本
+              另一个一样的三角形
             </text>
           </g>
         )}
         {isRectangle && (
           <line className="pp-diagonal" x1={RECT_BOX.x} y1={RECT_BOX.y} x2={RECT_BOX.x + RECT_BOX.width} y2={RECT_BOX.y + RECT_BOX.height} />
+        )}
+        {(state.stage === "snapped" || state.stage === "deriving" || state.stage === "derived" || state.stage === "hundredClimax") && (
+          <g className="pp-rectangle-readout">
+            <path d={`M ${RECT_BOX.x - 24} ${RECT_BOX.y} L ${RECT_BOX.x - 24} ${RECT_BOX.y + RECT_BOX.height}`} />
+            <path d={`M ${RECT_BOX.x} ${RECT_BOX.y - 24} L ${RECT_BOX.x + RECT_BOX.width} ${RECT_BOX.y - 24}`} />
+            <text x={RECT_BOX.x - 52} y={RECT_BOX.y + RECT_BOX.height / 2} textAnchor="middle">
+              {state.n} 行
+            </text>
+            <text x={RECT_BOX.x + RECT_BOX.width / 2} y={RECT_BOX.y - 42} textAnchor="middle">
+              每行 {state.n + 1} 个
+            </text>
+          </g>
         )}
         {dots.map((dot) => {
           const x = dot.source === "blue" && drag.active && !isRectangle ? dot.x + drag.x : dot.x;
@@ -270,7 +294,7 @@ function DotStage({
           {stageInstruction(state)}
         </text>
       </svg>
-      {!isLockedRectangle && (
+      {copyVisible && !isLockedRectangle && (
         <button
           aria-label="拖动蓝色三角形"
           className="pp-blue-drag-surface"
@@ -299,6 +323,12 @@ function TracePills({ trace }: { trace: TraceEvent<TriangleNumberState, Triangle
 export default function TriangleNumberHero() {
   const { state, invariantResults, measurements, trace, act } = useHeroStore();
   const invariant = invariantResults[0];
+
+  useEffect(() => {
+    if (state.stage !== "idle") return undefined;
+    const timer = window.setTimeout(() => act({ type: "revealCopy" }), 1100);
+    return () => window.clearTimeout(timer);
+  }, [act, state.stage]);
 
   useEffect(() => {
     if (state.stage !== "snapped") return undefined;
