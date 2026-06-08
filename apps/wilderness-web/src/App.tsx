@@ -1,4 +1,4 @@
-import { useMemo, useReducer, useRef, useState, type PointerEvent } from "react";
+import { useMemo, useReducer } from "react";
 import {
   createInitialWorld,
   dispatchWorld,
@@ -9,6 +9,7 @@ import {
   type WorldState,
 } from "@math-wild/core";
 import { WildernessCanvas } from "./WildernessCanvas";
+import { TouchWilderness } from "./TouchWilderness";
 
 function reducer(state: WorldState, action: MathAction) {
   return dispatchWorld(state, action);
@@ -28,7 +29,7 @@ function discoveryReady(state: WorldState) {
 
 function nextHint(state: WorldState) {
   if (!hasCopy(state)) return "Make a second stair pattern.";
-  if (!state.recognitions.some((recognition) => recognition.kind === "flippedCopy")) return "Flip the copy until it faces the first pattern.";
+  if (!state.recognitions.some((recognition) => recognition.kind === "flippedCopy")) return "Drag the blue copy toward the row field. It will turn as it moves.";
   if (!discoveryReady(state)) return "Move the copy until the rows complete.";
   if (!hasLens(state)) return "A Lens is forming from the completed rows.";
   if (!state.lensResults["beacon-100"]) return "Use the Lens on the distant mountain.";
@@ -39,8 +40,6 @@ function nextHint(state: WorldState) {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialWorld);
-  const [stageDrag, setStageDrag] = useState({ active: false, startX: 0, startY: 0, x: 0, y: 0 });
-  const stageRef = useRef<HTMLDivElement | null>(null);
   const artifacts = useMemo(() => (state.proof ? exportArtifacts(state) : undefined), [state]);
   const beaconPreview = rectangleLensPreview(state.objects["beacon-100"], state);
   const failure = state.lensResults["counterexample-8"];
@@ -76,62 +75,12 @@ export default function App() {
     }
   }
 
-  const copyReadyForDrag = Boolean(state.objects["practice-8-copy"]) && !discoveryReady(state);
-
-  function beginStageDrag(event: PointerEvent<HTMLButtonElement>) {
-    if (!copyReadyForDrag) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setStageDrag({ active: true, startX: event.clientX, startY: event.clientY, x: 0, y: 0 });
-  }
-
-  function moveStageDrag(event: PointerEvent<HTMLButtonElement>) {
-    if (!stageDrag.active || !copyReadyForDrag) return;
-    const rect = stageRef.current?.getBoundingClientRect();
-    const width = rect?.width ?? window.innerWidth;
-    const height = rect?.height ?? window.innerHeight;
-    const x = event.clientX - stageDrag.startX;
-    const y = event.clientY - stageDrag.startY;
-    setStageDrag((current) => ({ ...current, x, y }));
-    dispatch({
-      type: "dragDotSet",
-      targetId: "practice-8-copy",
-      to: {
-        x: -0.5 + (x / width) * 5,
-        y: -0.7 - (y / height) * 3,
-        z: 0,
-      },
-    });
-  }
-
-  function endStageDrag(event: PointerEvent<HTMLButtonElement>) {
-    if (!stageDrag.active) return;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    const shouldSnap = Math.abs(stageDrag.x) > 48 || Math.abs(stageDrag.y) > 42;
-    setStageDrag({ active: false, startX: 0, startY: 0, x: 0, y: 0 });
-    if (copyReadyForDrag && shouldSnap) {
-      dispatch({ type: "snapToRectangleCompletion", targetId: "practice-8-copy", partnerId: "practice-8" });
-    }
-  }
-
   return (
-    <main className="wilderness-shell" ref={stageRef}>
-      <WildernessCanvas state={state} dispatch={dispatch} />
-      {copyReadyForDrag && (
-        <button
-          aria-label="Drag copied stair pattern"
-          className="stage-drag-surface"
-          onPointerCancel={endStageDrag}
-          onPointerDown={beginStageDrag}
-          onPointerMove={moveStageDrag}
-          onPointerUp={endStageDrag}
-          style={{ transform: `translate(${stageDrag.x}px, ${stageDrag.y}px)` }}
-          type="button"
-        >
-          move the copy
-        </button>
-      )}
+    <main className="wilderness-shell">
+      <div className="desktop-world" aria-hidden="true">
+        <WildernessCanvas state={state} dispatch={dispatch} />
+      </div>
+      <TouchWilderness state={state} dispatch={dispatch} />
       <section className="beacon-copy" aria-label="Beacon">
         <p>Beacon</p>
         <h1>How many dots are inside this mountain?</h1>

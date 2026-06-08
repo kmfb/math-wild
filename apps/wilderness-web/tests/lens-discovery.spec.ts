@@ -3,11 +3,11 @@ import { expect, test, type Page } from "@playwright/test";
 async function runLensLoop(page: Page) {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "How many dots are inside this mountain?" })).toBeVisible();
-  await expect(page.locator("canvas")).toBeVisible();
+  await expect(page.locator("main")).toBeVisible();
 
   const continueButton = page.getByRole("button", { name: "Continue" });
   await continueButton.click();
-  await expect(page.getByText("Flip the copy until it faces the first pattern.")).toBeVisible();
+  await expect(page.getByText("Drag the blue copy toward the row field. It will turn as it moves.")).toBeVisible();
   await continueButton.click();
   await expect(page.getByText("Move the copy until the rows complete.")).toBeVisible();
   await continueButton.click();
@@ -27,7 +27,7 @@ test("user can create a Lens, apply it, test failure, and compile proof", async 
   await expect(page.getByText("Proof inscription")).toBeVisible();
   await expect(page.getByText("One triangle contains half as many dots: 5050.")).toBeVisible();
   await expect(page.locator(".world-inscription").getByText("Rows cannot be completed to a uniform length by this Lens.")).toBeVisible();
-  await expect(page.getByText("New horizon unlocked")).toBeVisible();
+  await expect(page.locator(".horizon-chip, .touch-horizon-chip").filter({ hasText: "New horizon unlocked" }).first()).toBeVisible();
 });
 
 test("mobile viewport can perform the core Lens loop", async ({ page }) => {
@@ -37,20 +37,20 @@ test("mobile viewport can perform the core Lens loop", async ({ page }) => {
   await expect(page.getByText("Therefore 1 + 2 + ... + n = n(n+1)/2.")).toBeVisible();
 });
 
-test("main stage drag can complete the rectangle", async ({ page }) => {
+test("touch stage drag can complete the rectangle", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "Touch-native drag is the mobile interaction contract.");
   await page.goto("/");
-  await expect(page.locator("canvas")).toBeVisible();
 
   const continueButton = page.getByRole("button", { name: "Continue" });
   await continueButton.click();
-  await expect(page.getByText("Flip the copy until it faces the first pattern.")).toBeVisible();
+  await expect(page.getByText("Drag the blue copy toward the row field. It will turn as it moves.")).toBeVisible();
   await continueButton.click();
   await expect(page.getByText("Move the copy until the rows complete.")).toBeVisible();
 
-  const surface = page.getByRole("button", { name: "Drag copied stair pattern" });
+  const surface = page.getByRole("button", { name: "Touch and drag copied stair pattern" });
   await expect(surface).toBeVisible();
   const box = await surface.boundingBox();
-  if (!box) throw new Error("Canvas is missing a bounding box");
+  if (!box) throw new Error("Touch stage is missing a bounding box");
 
   const start = { x: box.x + box.width * 0.5, y: box.y + box.height * 0.5 };
   const end = { x: start.x - 80, y: start.y };
