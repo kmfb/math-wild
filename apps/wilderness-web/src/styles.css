@@ -43,6 +43,7 @@ button {
   left: clamp(18px, 4vw, 56px);
   top: clamp(18px, 4vw, 48px);
   max-width: 560px;
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -83,6 +84,7 @@ button {
   bottom: clamp(104px, 14vh, 138px);
   width: min(620px, calc(100vw - 36px));
   padding: 0;
+  z-index: 4;
   pointer-events: none;
 }
 
@@ -110,6 +112,7 @@ button {
   position: absolute;
   right: clamp(16px, 4vw, 54px);
   top: clamp(18px, 5vw, 54px);
+  z-index: 4;
   pointer-events: none;
 }
 
@@ -138,6 +141,7 @@ button {
   bottom: clamp(18px, 4vw, 46px);
   display: flex;
   gap: 10px;
+  z-index: 6;
 }
 
 .world-actions button {
@@ -169,6 +173,7 @@ button {
   width: min(470px, calc(100vw - 32px));
   max-height: calc(100vh - 200px);
   overflow: auto;
+  z-index: 7;
   border-left: 1px solid rgba(94, 234, 212, 0.55);
   padding-left: 18px;
   color: #e0f2fe;
@@ -205,42 +210,159 @@ button {
 }
 
 @media (max-width: 760px) {
+  .wilderness-shell {
+    min-height: 100svh;
+  }
+
+  .wilderness-canvas {
+    height: 100svh !important;
+  }
+
+  .beacon-copy {
+    top: max(12px, env(safe-area-inset-top));
+    left: 14px;
+    right: 14px;
+    max-width: none;
+  }
+
+  .beacon-copy p {
+    margin-bottom: 5px;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+  }
+
   .beacon-copy h1 {
-    font-size: 3rem;
+    max-width: 300px;
+    font-size: clamp(1.55rem, 8.2vw, 2.25rem);
+    line-height: 1;
   }
 
   .beacon-copy span {
-    max-width: 320px;
-    font-size: 0.92rem;
+    display: none;
   }
 
   .lens-ring {
-    top: auto;
-    bottom: 86px;
-    left: 16px;
-    right: auto;
+    top: max(16px, env(safe-area-inset-top));
+    right: 12px;
+    bottom: auto;
+    left: auto;
+    max-width: 164px;
+  }
+
+  .lens-ring span {
+    min-height: 32px;
+    padding: 0 10px;
+    border-color: rgba(148, 163, 184, 0.28);
+    background: rgba(2, 6, 23, 0.68);
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+    text-align: center;
   }
 
   .world-inscription {
-    bottom: 154px;
+    left: 12px;
+    right: 12px;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    width: auto;
+    min-height: 74px;
+    padding: 12px 13px;
+    border: 1px solid rgba(125, 211, 252, 0.2);
+    border-radius: 18px;
+    background: rgba(2, 6, 23, 0.68);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(14px);
+  }
+
+  .world-inscription strong {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    line-height: 1.25;
+  }
+
+  .world-inscription span {
+    margin-top: 7px;
+    font-size: 0.98rem;
+    line-height: 1.22;
   }
 
   .world-actions {
-    left: 14px;
-    right: 14px;
+    left: 12px;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
     justify-content: stretch;
+    gap: 8px;
   }
 
   .world-actions button {
     flex: 1;
     min-width: 0;
+    min-height: 56px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.84);
+    font-size: 0.86rem;
+  }
+
+  .world-actions button:first-child {
+    flex: 1.35;
   }
 
   .proof-inscription {
-    left: 16px;
-    right: 16px;
-    top: 220px;
+    left: 12px;
+    right: 12px;
+    top: max(116px, calc(env(safe-area-inset-top) + 96px));
+    bottom: calc(148px + env(safe-area-inset-bottom));
     width: auto;
-    max-height: 34vh;
+    max-height: none;
+    border: 1px solid rgba(94, 234, 212, 0.32);
+    border-radius: 20px;
+    padding: 14px;
+    background:
+      linear-gradient(180deg, rgba(8, 47, 73, 0.8), rgba(2, 6, 23, 0.86));
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(16px);
+  }
+
+  .proof-inscription h2 {
+    font-size: 0.7rem;
+  }
+
+  .proof-inscription pre {
+    font-size: 0.78rem;
+    line-height: 1.42;
+  }
+
+  .horizon-chip {
+    min-width: 124px;
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .beacon-copy h1 {
+    max-width: 250px;
+    font-size: 1.48rem;
+  }
+
+  .lens-ring {
+    max-width: 132px;
+  }
+
+  .lens-ring span {
+    font-size: 0.5rem;
+  }
+
+  .world-inscription {
+    min-height: 68px;
+    padding: 10px 11px;
+  }
+
+  .world-inscription span {
+    font-size: 0.9rem;
+  }
+
+  .world-actions button {
+    min-height: 52px;
+    font-size: 0.8rem;
   }
 }
