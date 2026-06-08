@@ -1,9 +1,0 @@
-{
-  "id": "triangle_number_sum",
-  "type": "triangle_number",
-  "title": "这堆点有多少个？",
-  "subtitle": "别数。换个看法。",
-  "initialN": 8,
-  "minN": 3,
-  "maxN": 100
-}

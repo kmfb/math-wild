@@ -1,6 +1,8 @@
 .venv/
 node_modules/
 dist/
+test-results/
+playwright-report/
 *.tsbuildinfo
 __pycache__/
 *.pyc

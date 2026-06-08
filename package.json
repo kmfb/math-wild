@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --dir apps/lab-web dev --host 0.0.0.0",
-    "build": "pnpm --dir apps/lab-web build",
-    "test": "pnpm --dir packages/math-worlds test && pnpm --dir packages/concept-core test",
+    "dev": "pnpm --dir apps/wilderness-web dev --host 0.0.0.0",
+    "build": "pnpm --dir apps/wilderness-web build",
+    "test": "pnpm --dir packages/core test",
+    "test:e2e": "pnpm --dir apps/wilderness-web test:e2e",
     "verify:lab": "pnpm test"
   },
   "packageManager": "pnpm@10.30.3"

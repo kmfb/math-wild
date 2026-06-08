@@ -1,195 +1,327 @@
-# Math Wild Agent Principles
+# Math Wild
 
-## Core Thesis
+## Purpose
 
-Math Wild is not a prettier math tutorial, a Manim generator, or an interactive problem bank.
+Math Wild is a **Mathematical Imagination OS**.
 
-Math Wild is a reproducible process for producing mathematical insight.
+It is not a course, worksheet, video library, whiteboard, puzzle game, or prettier school-math tutorial.
 
-The project exists to turn mathematical concepts into operable worlds where learners act, receive world feedback, see structure emerge, name the structure, compress it into formal notation, and transfer it to a new case.
-
-The core process is:
+Math Wild exists to help people:
 
 ```text
-curiosity -> action -> structure appears -> surprise -> naming -> formalization -> transfer
+play with mathematical objects
+notice structure
+create a reusable lens
+test where the lens works
+see where it fails
+compile their actions into proof
+share the resulting playable proof
 ```
 
-The highest standard is not whether the page looks good, the animation is smooth, the code is elegant, or the chapter count is high. The highest standard is:
+The user is not merely a learner.
 
-> Can someone who has not been pre-taught the concept operate the world and say the core structure in their own words?
+The user is a mathematical author.
 
-Examples:
+## Core Product Principle
 
-- Triangle numbers: "Two identical triangles fit together into a rectangle."
-- Equation balance: "The equals sign means the relationship between both sides stays the same."
-- Distributive law: "One rectangle can be cut into parts, and the total area stays the same."
+Math Wild is built around **Lens Discovery**.
 
-## Product Definition
+A Lens is a reusable mathematical way of seeing.
 
-Math Wild is a playable mathematical insight system.
+A good experience does not end with an answer. It ends with a tool the user can apply elsewhere.
 
-It should create the feeling:
-
-> I was not just taught this. I saw it myself.
-
-Videos, posters, labs, formulas, explanations, traces, and renderers are outputs. They are not the source of truth. The source of truth is the learning transformation caused by an operable mathematical world.
-
-## Wonder Loop
-
-Every concept should be designed through the Wonder Loop before implementation.
-
-1. Hook
-   Start with a question that creates curiosity and tension.
-
-2. World
-   Give the learner an operable mathematical world, not a static diagram.
-
-3. Friction
-   Let the learner feel why the naive method is clumsy.
-
-4. Transformation
-   Give the learner one strong main action that changes the world.
-
-5. Revelation
-   Make the structure appear from the action. Do not explain it first.
-
-6. Naming
-   Name the structure only after the learner has seen it.
-
-7. Compression
-   Let the formula appear as a compressed form of the seen structure.
-
-8. Transfer
-   Change the number or context so the learner sees that the structure is general.
-
-## Design Priorities
-
-Work in this order:
-
-1. Experience Line
-   Can the learner feel the insight?
-
-2. Formal Line
-   Can the insight be accurately expressed as formula, proof, video, or explanation?
-
-3. Engine Line
-   Can the process be reused through specs, invariants, traces, renderers, and verifiers?
-
-The engine serves the experience and formal lines. Do not let architecture come before the first strong learning experience.
-
-## Non-Negotiable Principles
-
-- Experience before naming.
-- World feedback before written explanation.
-- Formula as reward, not introduction.
-- One main action per concept.
-- Fewer buttons, more operable objects.
-- Less instruction, more invitation.
-- First create wonder, then make it rigorous.
-- A concept is not done until the learner can state the revelation sentence.
-- Do not display a proof. Design a situation where the learner discovers the proof.
-- The learner must meet friction before seeing the shortcut.
-- The learner must trigger the structure by acting, not by watching.
-- Formulas must be compressed from object behavior.
-
-## Concept Design Doc
-
-Before adding a new concept or major learning experience, write this design first:
+Example:
 
 ```text
-1. Concept
-What mathematical idea is being learned?
+Discovery:
+Two identical triangular dot patterns can complete a rectangle.
 
-2. Hook
-What question makes the learner want to act?
+Lens:
+Rectangle Completion Lens
 
-3. Main Action
-What is the one core action?
+Power:
+It reveals 1 + 2 + ... + n = n(n+1)/2.
 
-4. Revelation Sentence
-What should the learner be able to say after playing?
-
-5. Formal Compression
-What formula or formal statement compresses the seen structure?
-
-6. Transfer
-What changed number or scenario proves this was not a one-off trick?
-
-7. Success Test
-How will we test whether an unprepared learner can state the revelation sentence?
+Boundary:
+It does not apply to arbitrary stair-like patterns.
 ```
 
-## Current North Star
+## Highest-Level Loop
 
-v0.9 is not merely "Playable Proof Hero". It is the first complete Wonder Loop.
-
-Current object: triangle numbers.
-
-Current revelation sentence:
-
-> Two identical triangles fit together into a rectangle.
-
-The triangle-number Hero should be judged by this audit:
-
-- Does the Hook make the learner want to know the answer?
-- Does the learner feel that counting is the clumsy path?
-- Is there exactly one main action?
-- Does snapping the triangles make the structure visible?
-- Does the formula appear late enough?
-- Does the 100-layer case create a transfer/climax moment?
-- Can a new learner say the revelation sentence after 60 seconds?
-
-If any item fails, fix that item before adding new chapters, new engines, or new visual polish.
-
-## Discovery Mechanics
-
-Wonder Loop order is not enough. The learner must feel ownership of the discovery.
-
-For a playable proof, design mechanics where:
-
-- Wrong placement has visible consequences.
-- Near-correct placement creates partial structural feedback.
-- Correct placement makes the structure snap into view.
-- Numbers appear before variables.
-- The learner first reads concrete rows, then sees the general formula.
-- Transfer answers the opening question instead of acting like an extra feature.
-
-For triangle numbers, the intended discovery path is:
+Every major experience follows:
 
 ```text
-100 layers feels too large to count
--> try 8 layers
--> drag an identical shadow
--> wrong placement does not make rows line up
--> near placement shows row pairs like 1 + 8, 2 + 7, 3 + 6
--> snap makes every row equally long
--> concrete compression: two triangles = 8 rows x 9
--> one triangle = half
--> return to 100 layers: 100 x 101 / 2 = 5050
+Beacon
+-> Exploration
+-> Recognition
+-> Lens Creation
+-> Lens Application
+-> Lens Failure Boundary
+-> Proof Compilation
+-> New Horizon
 ```
 
-## Development Guidance
+## Source of Truth
 
-When working on Math Wild:
+No renderer is the source of mathematical truth.
 
-- Do not add new chapters just to increase breadth.
-- Do not build broad abstractions before there are multiple strong examples.
-- Do not let React, Manim, verifier, trace, or invariant code become the learning source of truth.
-- Keep UI controls subordinate to the mathematical object on the stage.
-- Prefer direct manipulation over step buttons.
-- Prefer visible structural change over explanatory text.
-- Keep each concept centered on one verb:
-  - Triangle numbers: fit/pair.
-  - Equations: transform both sides.
-  - Distributive law: cut.
-  - Ratio: scale.
+Not React.
+Not Three.js.
+Not SVG.
+Not Manim.
+Not animation state.
 
-## Roadmap Orientation
+The source of truth is:
 
-- v0.9: First complete Wonder Loop, using triangle numbers.
-- v1.0: Export the same triangle-number learning process into playable lab, Manim explainer, and long-form lesson.
-- v1.1: Second Wonder Loop, equation balance.
-- v1.2: Third Wonder Loop, distributive law.
-- v1.3: Only after several strong loops exist, abstract the Wonder Loop engine.
+```text
+WorldState
+MathObject
+MathAction
+Trace
+RecognitionResult
+MathLens
+LensResult
+ProofPlan
+```
 
-The project should grow from proven insight experiences into reusable systems, not from a speculative platform into experiences.
+## Required Core Entities
+
+Only these entities are core.
+
+```text
+WorldState
+MathObject
+MathAction
+TraceEvent
+RecognitionResult
+MathLens
+ApplicabilityResult
+LensResult
+ProofStep
+Beacon
+```
+
+Do not introduce new core entities unless they remove more complexity than they add.
+
+## Product Interface
+
+The main user experience is a **mathematical wilderness**, not a whiteboard.
+
+The interface should feel like entering a quiet mathematical world:
+
+```text
+distant unresolved objects
+breathable space
+physical mathematical objects
+glowing lenses
+world feedback
+formula inscriptions
+visible boundaries of a method
+```
+
+Do not make the main interface feel like:
+
+```text
+spreadsheet
+slide deck
+whiteboard
+dashboard
+editor
+worksheet
+tool panel
+```
+
+## Technology Direction
+
+The main product uses:
+
+```text
+React
+TypeScript
+Vite
+React Three Fiber
+Three.js
+Drei
+postprocessing
+Vitest
+Playwright
+```
+
+The core is custom:
+
+```text
+world kernel
+recognition
+lens engine
+trace
+proof compiler
+```
+
+## Renderer Rule
+
+The renderer visualizes semantic state.
+
+Bad:
+
+```ts
+mesh.position.x += 10;
+```
+
+Good:
+
+```ts
+dispatch({
+  type: "dragObject",
+  objectId,
+  toWorldPosition,
+});
+```
+
+The renderer does not mutate truth. The world reducer mutates truth.
+
+## Interaction Rule
+
+Pointer gestures are not mathematical actions.
+
+Dragging is an input gesture.
+
+The action recorded in trace must be semantic:
+
+```text
+duplicateDotSet
+flipDotSet
+dragDotSet
+snapToRectangleCompletion
+applyLens
+testLensOnCounterexample
+acceptLens
+compileProof
+```
+
+## Aesthetic Rule
+
+Beauty is part of cognition.
+
+Every visual effect must serve a mathematical role.
+
+```text
+distance creates desire
+fog creates mystery
+glow reveals structure
+snap reveals fit
+fracture reveals failure
+lens reveals a way of seeing
+inscription reveals compression
+```
+
+Decorative beauty without mathematical function is noise.
+
+## Formula Rule
+
+Formula appears after structure.
+
+Correct order:
+
+```text
+object
+action
+recognized structure
+lens
+application
+proof
+formula
+```
+
+Formula is compression, not instruction.
+
+## Failure Rule
+
+A Lens must have a boundary.
+
+Every important Lens should be testable on at least one nearby non-example.
+
+The system should show:
+
+```text
+where the Lens applies
+where it fails
+why it fails
+what condition is missing
+```
+
+A mathematical tool without a boundary is not yet understood.
+
+## Proof Rule
+
+Proof is compiled from trace.
+
+A proof should not be separately authored when the user's semantic actions already contain the proof path.
+
+Trace should be sufficient to produce:
+
+```text
+proof.md
+proof_steps.json
+optional manim_plan.json
+```
+
+## First Target
+
+The first target experience is:
+
+```text
+Rectangle Completion Lens
+```
+
+World:
+
+```text
+Dot World
+```
+
+Beacon:
+
+```text
+100-layer triangular dot mountain
+```
+
+Practice object:
+
+```text
+8-layer stair-dot pattern
+```
+
+Counterexample:
+
+```text
+nearby stair-like pattern where rectangle completion fails
+```
+
+Success sentence:
+
+```text
+I found a way to complete a triangular stair pattern into a rectangle.
+It works for this kind of stair pattern, but not every pattern.
+```
+
+## Anti-Goals
+
+Do not prioritize:
+
+```text
+more lessons
+more chapters
+more formulas
+more UI panels
+AI image generation
+static posters
+preauthored step-by-step proofs
+whiteboard editing
+course navigation
+```
+
+until the Lens Discovery loop works.
+
+## One Sentence
+
+Math Wild is a system for helping people **create mathematical lenses, test their boundaries, and compile their discoveries into proof**.

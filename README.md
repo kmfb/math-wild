@@ -1,219 +1,147 @@
 # Math Wild
 
-A Manim-based math visual scene compiler prototype for exploratory math lessons.
+Math Wild is a **Mathematical Imagination OS**.
 
-Current chapters:
+It is an interactive mathematical world where users manipulate semantic objects, discover reusable mathematical lenses, test their boundaries, and compile their actions into proof.
 
-```text
-balance_equations  → 平衡与方程：等号不是答案，而是关系。
-distributive_law   → 拆开与分配：公式只是长方形被切开。
-```
-
-Current lab:
+This repo currently implements the first product slice:
 
 ```text
-apps/lab-web → Playable Proof Hero for triangle numbers
+Rectangle Completion Lens
 ```
 
-## What this repo does
-
-This repo renders structured math chapters into Manim lesson videos, exports keyframes, composes posters from those keyframes, and writes a per-chapter render report.
-It also includes a React/SVG playable proof hero backed by math worlds and invariant checks.
+The user starts with a distant unresolved Beacon:
 
 ```text
-chapters/<chapter>/chapter_spec.json
-→ verify.py
-→ chapters/<chapter>/scene.py
-→ render.py
-→ renders/<chapter>/
+100-layer triangular dot mountain
 ```
 
-## Install with uv
+They explore a smaller local object:
 
-### macOS
-
-```bash
-bash scripts/setup_macos_uv.sh
-uv run python render.py --chapter balance_equations --quality ql
+```text
+8-layer stair-dot pattern
 ```
 
-### Ubuntu / Debian
+Through duplicate, flip, drag, and snap actions, the system recognizes:
 
-```bash
-bash scripts/setup_ubuntu_uv.sh
-uv run python render.py --chapter balance_equations --quality ql
+```text
+two identical stair-dot patterns complete a rectangle
+uniform rows
 ```
 
-### Windows PowerShell
+That recognition becomes a reusable Lens. The user can apply it to the 100-layer Beacon, test it on a nearby broken stair counterexample, and compile the semantic trace into proof.
 
-Install FFmpeg first:
+## Shape
 
-```powershell
-winget install Gyan.FFmpeg
+```text
+apps/
+└─ wilderness-web/        React + Three.js wilderness experience
+
+packages/
+├─ core/                  world state, actions, trace, recognition, lenses, proof compiler
+└─ three-world/           semantic dot layout helpers for Three renderer
+
+specs/
+└─ rectangle-completion-lens.json
 ```
 
-Then:
-
-```powershell
-.\scripts\setup_windows_uv.ps1
-uv run python render.py --chapter balance_equations --quality ql
-```
-
-## Minimal commands
-
-```bash
-uv sync
-uv run python verify.py --all
-uv run python render.py --all --quality ql
-```
-
-## Lab Web
+## Commands
 
 ```bash
 pnpm install
 pnpm test
+pnpm build
 pnpm dev
 ```
 
-The current hero uses:
+The dev server runs:
 
 ```text
-packages/concept-specs/triangle_number_sum.json
-→ packages/math-worlds/triangle-number/
-→ apps/lab-web/src/labs/TriangleNumberHero.tsx
+apps/wilderness-web
 ```
 
-It shows why:
+## Core Loop
 
 ```text
-1 + 2 + ... + n = n(n + 1) / 2
+Beacon
+-> Exploration
+-> Recognition
+-> Lens Creation
+-> Lens Application
+-> Lens Failure Boundary
+-> Proof Compilation
+-> New Horizon
 ```
 
-by starting with an orange right-triangle dot array and a blue copy. The main interaction is to drag the blue copy toward the rectangle target; near the solution it auto-aligns, snaps into a rectangle, sweeps the rows, and then reveals the formula.
+## Source Of Truth
 
-The Equation Lab remains available in source:
+The renderer is not the source of mathematical truth.
+
+The source of truth is:
 
 ```text
-packages/concept-specs/equation_balance_x_plus_3_eq_8.json
-→ packages/math-kernel/
-→ packages/math-worlds/equation-balance/
-→ apps/lab-web/src/labs/EquationLab.tsx
+WorldState
+MathObject
+MathAction
+TraceEvent
+RecognitionResult
+MathLens
+LensResult
+ProofStep
 ```
 
-v0.8 makes the Equation Lab invariant-driven:
+React and Three.js visualize semantic state. The reducer mutates semantic state. The proof compiler reads trace and Lens results.
+
+## Required Outputs
+
+The first slice can produce:
 
 ```text
-user input
-→ EquationBalanceAction
-→ EquationBalanceWorld.act()
-→ invariant results
-→ feedback
-→ trace event
-→ web renderer
+trace.json
+lens.json
+lens_result.json
+proof_steps.json
+proof.md
 ```
 
-React does not decide whether the equation is balanced. It reads:
+These are generated in memory by:
+
+```ts
+exportArtifacts(worldState)
+```
+
+## Tests
+
+Current unit coverage includes:
 
 ```text
-world.checkInvariants(state)
-world.getFeedback(state)
-trace
+stair dot count
+duplicate preserves count
+flip preserves count
+rectangle completion recognition
+uniform row recognition
+Lens applicability success
+Lens applicability failure
+proof compilation
 ```
 
-v0.9 makes the invariant visible as interface:
-
-```text
-equation.balance invariant result
-→ Invariant Lens
-→ Equality Beam
-→ Equation Strip
-→ Bar Model
-→ Ghost Repair
-→ Trace Timeline
-```
-
-When `leftTotal = rightTotal` breaks, the relationship object breaks visually. When it is restored, the beam reconnects and every representation updates from the same invariant result.
-
-Render one chapter:
+Run:
 
 ```bash
-uv run python render.py --chapter balance_equations --quality ql
-uv run python render.py --chapter distributive_law --quality ql
+pnpm test
 ```
 
-High-quality render:
+## Product Standard
 
-```bash
-uv run python render.py --all --quality qh
-```
-
-Only render still keyframes and poster:
-
-```bash
-uv run python render.py --all --quality ql --skip-video
-```
-
-## Outputs
-
-After rendering:
+Success is not:
 
 ```text
-renders/
-├─ balance_equations/
-│  ├─ lesson.mp4
-│  ├─ poster.png
-│  ├─ keyframes/
-│  └─ render_report.json
-└─ distributive_law/
-   ├─ lesson.mp4
-   ├─ poster.png
-   ├─ keyframes/
-   └─ render_report.json
+The page showed a formula.
 ```
 
-## Push this repo to GitHub
-
-Create a new GitHub repo and push:
-
-```bash
-bash scripts/push_new_github_repo.sh math-wild private
-```
-
-Or push to an existing repo:
-
-```bash
-bash scripts/push_existing_github_repo.sh git@github.com:USER/REPO.git
-```
-
-## GitHub Actions
-
-This repo includes:
+Success is:
 
 ```text
-.github/workflows/render.yml
-```
-
-After pushing to GitHub, you can run the workflow manually from the Actions tab. It uses uv, installs system dependencies on Ubuntu, renders the Manim scene, and uploads `renders/` as an artifact.
-
-## Font note
-
-The default CJK font is platform-aware:
-
-```text
-macOS: Heiti SC
-Linux: Noto Sans CJK SC
-```
-
-Override it when needed:
-
-```bash
-MATH_WILD_CJK_FONT="Microsoft YaHei" uv run python render.py --all --quality ql
-```
-
-## Core principle
-
-```text
-math world state and invariants control math facts
-React, Manim, and poster export are renderers
-trace records the executable path through the world
+I found a method.
+This method works here, but not on every pattern.
 ```
