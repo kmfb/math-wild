@@ -16,40 +16,26 @@ function dotSets(state: WorldState) {
 
 function DotSet({
   object,
-  dispatch,
   recognized,
+  dragging,
+  onGrab,
 }: {
   object: DotSetObject;
-  dispatch: (action: MathAction) => void;
   recognized: boolean;
+  dragging: boolean;
+  onGrab: (event: ThreeEvent<PointerEvent>, objectId: string) => void;
 }) {
-  const [dragging, setDragging] = useState(false);
   const dots = useMemo(() => dotInstances(object), [object]);
+  const rows = object.rowLengths ?? Array.from({ length: object.n }, (_, index) => index + 1);
+  const maxRow = Math.max(...rows);
+  const handleWidth = Math.max(0.8, maxRow * 0.14 + 0.34);
+  const handleHeight = Math.max(0.8, object.n * 0.14 + 0.34);
   const color =
     object.semanticRole === "copy"
       ? "#67e8f9"
       : object.semanticRole === "counterexample"
         ? "#fb7185"
         : "#fbbf24";
-
-  function move(event: ThreeEvent<PointerEvent>) {
-    if (!dragging || object.semanticRole !== "copy") return;
-    event.stopPropagation();
-    dispatch({
-      type: "dragDotSet",
-      targetId: object.id,
-      to: { x: event.point.x, y: event.point.y, z: 0 },
-    });
-  }
-
-  function release(event: ThreeEvent<PointerEvent>) {
-    if (!dragging) return;
-    event.stopPropagation();
-    setDragging(false);
-    if (object.semanticRole === "copy" && Math.abs(object.transform.position.x + 1.05) < 1.8) {
-      dispatch({ type: "snapToRectangleCompletion", targetId: object.id, partnerId: "practice-8" });
-    }
-  }
 
   return (
     <group
@@ -58,14 +44,16 @@ function DotSet({
       scale={object.transform.scale}
       onPointerDown={(event) => {
         if (object.semanticRole === "copy") {
-          event.stopPropagation();
-          setDragging(true);
+          onGrab(event, object.id);
         }
       }}
-      onPointerMove={move}
-      onPointerUp={release}
-      onPointerLeave={release}
     >
+      {object.semanticRole === "copy" && (
+        <mesh position={[handleWidth / 2 - 0.16, -handleHeight / 2 + 0.16, -0.02]}>
+          <boxGeometry args={[handleWidth, handleHeight, 0.04]} />
+          <meshBasicMaterial color="#67e8f9" transparent opacity={dragging ? 0.18 : 0.06} />
+        </mesh>
+      )}
       {dots.map((dot) => (
         <mesh key={dot.id} position={[dot.x, dot.y, 0]}>
           <sphereGeometry args={[0.045, 12, 12]} />
@@ -77,6 +65,11 @@ function DotSet({
           />
         </mesh>
       ))}
+      {object.semanticRole === "copy" && (
+        <Text position={[handleWidth / 2 - 0.16, 0.32, 0.04]} fontSize={0.11} color={dragging ? "#ecfeff" : "#bae6fd"} anchorX="center">
+          drag lens material
+        </Text>
+      )}
     </group>
   );
 }
@@ -137,11 +130,50 @@ function BoundaryFracture({ visible }: { visible: boolean }) {
   );
 }
 
+function pointerTarget(event: ThreeEvent<PointerEvent>) {
+  return event.target instanceof Element ? event.target : undefined;
+}
+
 function Scene({ state, dispatch }: Props) {
+  const [activeDragId, setActiveDragId] = useState<string | undefined>();
   const recognized = state.recognitions.some((recognition) => recognition.kind === "rectangleCompletion");
   const lensActive = Boolean(state.activeLensId);
   const lensApplied = Boolean(state.lensResults["beacon-100"]?.ok);
   const lensFailed = state.lensResults["counterexample-8"]?.ok === false;
+  const copy = state.objects[activeDragId ?? ""];
+
+  function grabCopy(event: ThreeEvent<PointerEvent>, objectId: string) {
+    event.stopPropagation();
+    pointerTarget(event)?.setPointerCapture(event.pointerId);
+    setActiveDragId(objectId);
+  }
+
+  function dragOnPlane(event: ThreeEvent<PointerEvent>) {
+    if (!activeDragId) return;
+    event.stopPropagation();
+    dispatch({
+      type: "dragDotSet",
+      targetId: activeDragId,
+      to: {
+        x: Math.max(-3.7, Math.min(3.7, event.point.x)),
+        y: Math.max(-1.6, Math.min(1.35, event.point.y)),
+        z: 0,
+      },
+    });
+  }
+
+  function releaseDrag(event: ThreeEvent<PointerEvent>) {
+    if (!activeDragId) return;
+    event.stopPropagation();
+    const target = pointerTarget(event);
+    if (target?.hasPointerCapture(event.pointerId)) {
+      target.releasePointerCapture(event.pointerId);
+    }
+    if (copy?.kind === "dotSet" && Math.abs(copy.transform.position.x + 1.05) < 1.8) {
+      dispatch({ type: "snapToRectangleCompletion", targetId: activeDragId, partnerId: "practice-8" });
+    }
+    setActiveDragId(undefined);
+  }
 
   return (
     <>
@@ -151,13 +183,29 @@ function Scene({ state, dispatch }: Props) {
       <pointLight position={[-3, 3, 4]} intensity={35} color="#bae6fd" />
       <pointLight position={[3, 0.5, 2]} intensity={12} color="#fda4af" />
       <Beacon object={state.objects["beacon-100"]} lit={lensApplied} />
-      <group position={[0, 0, 0]}>
+      <group
+        position={[0, 0, 0]}
+        onPointerMove={dragOnPlane}
+        onPointerUp={releaseDrag}
+        onPointerCancel={releaseDrag}
+        onPointerLeave={releaseDrag}
+      >
+        <mesh position={[0, -0.05, -0.18]}>
+          <planeGeometry args={[8.8, 4.8]} />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
         <mesh position={[0, -1.42, -0.08]}>
           <boxGeometry args={[5.8, 0.08, 1.4]} />
           <meshStandardMaterial color="#172033" roughness={0.8} metalness={0.1} />
         </mesh>
         {dotSets(state).map((object) => (
-          <DotSet key={object.id} object={object} dispatch={dispatch} recognized={recognized && object.semanticRole !== "counterexample"} />
+          <DotSet
+            key={object.id}
+            object={object}
+            recognized={recognized && object.semanticRole !== "counterexample"}
+            dragging={activeDragId === object.id}
+            onGrab={grabCopy}
+          />
         ))}
         <LensGlyph active={lensActive} />
         <BoundaryFracture visible={lensFailed} />

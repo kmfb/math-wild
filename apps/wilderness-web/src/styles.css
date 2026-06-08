@@ -166,6 +166,40 @@ button {
   opacity: 0.42;
 }
 
+.stage-drag-surface {
+  position: absolute;
+  left: min(62vw, 720px);
+  top: 52vh;
+  z-index: 5;
+  width: 156px;
+  height: 116px;
+  border: 1px solid rgba(103, 232, 249, 0.38);
+  border-radius: 24px;
+  background: rgba(8, 145, 178, 0.11);
+  color: #bae6fd;
+  cursor: grab;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  touch-action: none;
+  user-select: none;
+  box-shadow:
+    inset 0 0 30px rgba(103, 232, 249, 0.12),
+    0 0 34px rgba(6, 182, 212, 0.18);
+}
+
+.stage-drag-surface:active {
+  cursor: grabbing;
+  border-color: rgba(103, 232, 249, 0.72);
+  background: rgba(8, 145, 178, 0.2);
+}
+
+.stage-drag-surface:focus-visible {
+  outline: 3px solid rgba(251, 191, 36, 0.78);
+  outline-offset: 4px;
+}
+
 .proof-inscription {
   position: absolute;
   right: clamp(16px, 4vw, 54px);
@@ -304,6 +338,16 @@ button {
 
   .world-actions button:first-child {
     flex: 1.35;
+  }
+
+  .stage-drag-surface {
+    left: auto;
+    right: 22px;
+    top: 42vh;
+    width: 124px;
+    height: 104px;
+    border-radius: 22px;
+    font-size: 0.62rem;
   }
 
   .proof-inscription {
