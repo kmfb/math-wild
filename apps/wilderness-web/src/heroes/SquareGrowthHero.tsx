@@ -1,17 +1,19 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, Text } from "@react-three/drei";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
-import { useMemo, useRef, useState, type PointerEvent } from "react";
+import { useMemo, useReducer, useRef, useState, type PointerEvent } from "react";
 import type { Mesh } from "three";
-import { growthSequence, squareDots } from "@math-wild/three-world";
+import {
+  createInitialSquareGrowthState,
+  dispatchSquareGrowth,
+  type SquareGrowthLensResult,
+  type SquareGrowthState,
+} from "@math-wild/core";
+import { growthSequence, squareDots, squareShell, type SquareGrowthDot } from "@math-wild/three-world";
 
 type HeroState = "beacon" | "seed" | "growing" | "structureVisible" | "formulaRevealed" | "hundredClimax";
 
 const maxPracticeN = 6;
-
-function oddSum(n: number) {
-  return Array.from({ length: n }, (_, index) => String(2 * index + 1)).join(" + ");
-}
 
 function nextState(n: number): HeroState {
   if (n < 2) return "seed";
@@ -24,26 +26,31 @@ function GlowDot({
   x,
   y,
   fresh,
+  arm = "body",
   scale = 1,
 }: {
   x: number;
   y: number;
   fresh: boolean;
+  arm?: "body" | "bottom" | "right";
   scale?: number;
 }) {
   const ref = useRef<Mesh>(null);
   useFrame(({ clock }) => {
     if (!ref.current) return;
-    const pulse = fresh ? Math.sin(clock.elapsedTime * 8) * 0.045 : Math.sin(clock.elapsedTime * 2 + x) * 0.012;
+    const offset = arm === "bottom" ? x * 0.8 : arm === "right" ? y * 0.8 + 1.6 : x;
+    const pulse = fresh ? Math.sin(clock.elapsedTime * 8 - offset) * 0.048 : Math.sin(clock.elapsedTime * 2 + x) * 0.012;
     ref.current.scale.setScalar(scale + pulse);
   });
+  const freshColor = arm === "right" ? "#5eead4" : "#67e8f9";
+  const freshEmissive = arm === "right" ? "#14b8a6" : "#0891b2";
 
   return (
     <mesh ref={ref} position={[x, y, 0]}>
       <sphereGeometry args={[0.07, 18, 18]} />
       <meshStandardMaterial
-        color={fresh ? "#67e8f9" : "#fbbf24"}
-        emissive={fresh ? "#0891b2" : "#b45309"}
+        color={fresh ? freshColor : "#fbbf24"}
+        emissive={fresh ? freshEmissive : "#b45309"}
         emissiveIntensity={fresh ? 1.65 : 0.95}
         roughness={0.28}
       />
@@ -51,8 +58,14 @@ function GlowDot({
   );
 }
 
+function shellArm(dot: SquareGrowthDot, n: number): "bottom" | "right" {
+  const edge = -((n - 1) / 2);
+  return dot.y === edge ? "bottom" : "right";
+}
+
 function PracticeSquare({ n }: { n: number }) {
-  const dots = useMemo(() => squareDots(n), [n]);
+  const priorDots = useMemo(() => squareDots(Math.max(1, n - 1)), [n]);
+  const shell = useMemo(() => squareShell(n), [n]);
   const freshRing = n;
   const spacing = 0.28;
 
@@ -62,9 +75,27 @@ function PracticeSquare({ n }: { n: number }) {
         <boxGeometry args={[Math.max(1.1, n * spacing + 0.42), Math.max(1.1, n * spacing + 0.42), 0.04]} />
         <meshStandardMaterial color="#111827" emissive="#0f172a" emissiveIntensity={0.5} transparent opacity={0.68} />
       </mesh>
-      {dots.map((dot) => (
-        <GlowDot key={dot.id} x={dot.x * spacing} y={dot.y * spacing} fresh={dot.ring === freshRing && n > 1} />
+      {priorDots.map((dot) => (
+        <GlowDot key={dot.id} x={dot.x * spacing} y={dot.y * spacing} fresh={false} />
       ))}
+      {shell.map((dot) => (
+        <GlowDot key={dot.id} x={dot.x * spacing} y={dot.y * spacing} fresh={freshRing > 1} arm={shellArm(dot, n)} />
+      ))}
+      {n >= 2 && (
+        <group position={[0, -n * spacing * 0.5 - 0.14, 0.05]}>
+          <mesh position={[0, 0, 0]}>
+            <boxGeometry args={[n * spacing, 0.026, 0.026]} />
+            <meshStandardMaterial color="#67e8f9" emissive="#0891b2" emissiveIntensity={1.25} />
+          </mesh>
+          <mesh position={[n * spacing * 0.5 - 0.01, n * spacing * 0.5 - 0.01, 0]}>
+            <boxGeometry args={[0.026, (n - 1) * spacing, 0.026]} />
+            <meshStandardMaterial color="#5eead4" emissive="#14b8a6" emissiveIntensity={1.25} />
+          </mesh>
+          <Text position={[0.08, -0.18, 0]} fontSize={0.11} color="#ccfbf1" anchorX="center">
+            {n} + {n - 1} = {2 * n - 1}
+          </Text>
+        </group>
+      )}
       {n >= 2 && (
         <group position={[0, -n * spacing * 0.5 - 0.46, 0.04]}>
           <mesh>
@@ -117,15 +148,15 @@ function BeaconSquare({ lit }: { lit: boolean }) {
   );
 }
 
-function FormulaInscription({ n, hundred }: { n: number; hundred: boolean }) {
-  if (hundred) {
+function FormulaInscription({ n, lensResult }: { n: number; lensResult?: SquareGrowthLensResult }) {
+  if (lensResult) {
     return (
       <group position={[0, -1.55, 0.2]}>
         <Text fontSize={0.2} color="#fef3c7" anchorX="center">
-          1 + 3 + 5 + ... + 199 = 100²
+          {lensResult.expression} = {lensResult.n}²
         </Text>
         <Text position={[0, -0.34, 0]} fontSize={0.38} color="#fde68a" anchorX="center">
-          10000
+          {String(lensResult.value)}
         </Text>
       </group>
     );
@@ -135,7 +166,7 @@ function FormulaInscription({ n, hundred }: { n: number; hundred: boolean }) {
   return (
     <group position={[0, -1.62, 0.18]}>
       <Text fontSize={0.16} color="#fef3c7" anchorX="center">
-        {oddSum(n)} = {n}²
+        {growthSequence(n)[n - 1].total === n * n ? `${Array.from({ length: n }, (_, index) => String(2 * index + 1)).join(" + ")} = ${n}²` : ""}
       </Text>
       {n >= maxPracticeN && (
         <Text position={[0, -0.3, 0]} fontSize={0.15} color="#ccfbf1" anchorX="center">
@@ -146,7 +177,7 @@ function FormulaInscription({ n, hundred }: { n: number; hundred: boolean }) {
   );
 }
 
-function SquareScene({ n, phase }: { n: number; phase: HeroState }) {
+function SquareScene({ n, phase, lensResult }: { n: number; phase: HeroState; lensResult?: SquareGrowthLensResult }) {
   const climax = phase === "hundredClimax";
   return (
     <>
@@ -161,7 +192,7 @@ function SquareScene({ n, phase }: { n: number; phase: HeroState }) {
           <PracticeSquare n={n} />
         </group>
       )}
-      <FormulaInscription n={n} hundred={climax} />
+      <FormulaInscription n={n} lensResult={lensResult} />
       <EffectComposer>
         <Bloom luminanceThreshold={0.16} intensity={1.1} mipmapBlur />
         <Vignette eskil={false} offset={0.18} darkness={0.78} />
@@ -171,16 +202,21 @@ function SquareScene({ n, phase }: { n: number; phase: HeroState }) {
 }
 
 export function SquareGrowthHero() {
-  const [n, setN] = useState(1);
+  const [world, dispatch] = useReducer(
+    (state: SquareGrowthState, action: Parameters<typeof dispatchSquareGrowth>[1]) => dispatchSquareGrowth(state, action),
+    undefined,
+    () => createInitialSquareGrowthState(100),
+  );
   const [phase, setPhase] = useState<HeroState>("beacon");
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | undefined>();
   const frames = useMemo(() => growthSequence(maxPracticeN), []);
+  const n = world.n;
   const current = frames[n - 1];
 
   function grow() {
     if (phase === "hundredClimax") return;
     const next = Math.min(maxPracticeN, n + 1);
-    setN(next);
+    dispatch({ type: "growSquareShell", from: n, to: next });
     setPhase(nextState(next));
   }
 
@@ -206,7 +242,7 @@ export function SquareGrowthHero() {
   }
 
   function revealHundred() {
-    setN(maxPracticeN);
+    dispatch({ type: "applySquareGrowthLens", targetN: world.targetN });
     setPhase("hundredClimax");
   }
 
@@ -226,7 +262,7 @@ export function SquareGrowthHero() {
       onPointerUp={endDrag}
     >
       <Canvas camera={{ position: [0, 0.05, 5.2], fov: 48 }} className="square-growth-canvas">
-        <SquareScene n={n} phase={phase} />
+        <SquareScene n={n} phase={phase} lensResult={world.lensResult} />
       </Canvas>
       <section className="square-growth-copy" aria-label="Square Growth">
         <p>Square Growth</p>
@@ -241,14 +277,18 @@ export function SquareGrowthHero() {
         )}
         {phase !== "beacon" && phase !== "hundredClimax" && n >= 4 && (
           <span className="square-growth-formula">
-            {n >= maxPracticeN ? "1 + 3 + 5 + ... + (2n - 1) = n²" : `${oddSum(n)} = ${n}²`}
+            {n >= maxPracticeN ? "1 + 3 + 5 + ... + (2n - 1) = n²" : `${Array.from({ length: n }, (_, index) => String(2 * index + 1)).join(" + ")} = ${n}²`}
           </span>
         )}
-        {phase === "hundredClimax" && <span>1 + 3 + 5 + ... + 199 = 10000</span>}
+        {phase === "hundredClimax" && world.lensResult && (
+          <span>
+            {world.lensResult.expression} = {world.lensResult.value}
+          </span>
+        )}
       </section>
       <nav className="square-growth-actions" aria-label="Growth controls" onPointerDown={(event) => event.stopPropagation()}>
         <button type="button" onClick={grow}>
-          Grow one ring
+          Watch one ring
         </button>
         <button type="button" onClick={revealHundred}>
           Light 100×100

@@ -116,7 +116,7 @@ button {
   min-height: 50px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.72);
+  background: rgba(15, 23, 42, 0.58);
   color: #ecfeff;
   cursor: pointer;
   font-size: 0.9rem;
@@ -124,8 +124,8 @@ button {
 }
 
 .square-growth-actions button:first-child {
-  background: #fbbf24;
-  color: #1c1917;
+  border-color: rgba(251, 191, 36, 0.34);
+  color: #fef3c7;
 }
 
 .square-growth-actions button:focus-visible {
