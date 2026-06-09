@@ -12,8 +12,8 @@ body,
 
 body {
   overflow: hidden;
-  background: #060712;
-  color: #ecfeff;
+  background: #03040c;
+  color: #f8fafc;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -22,349 +22,197 @@ button {
   font: inherit;
 }
 
-.wilderness-shell {
+.square-growth-shell {
   position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 18%, rgba(14, 165, 233, 0.18), transparent 34%),
-    radial-gradient(circle at 70% 45%, rgba(20, 184, 166, 0.13), transparent 30%),
-    #060712;
+    radial-gradient(circle at 50% 44%, rgba(113, 63, 18, 0.16), transparent 30%),
+    radial-gradient(circle at 75% 22%, rgba(8, 145, 178, 0.12), transparent 34%),
+    #03040c;
+  touch-action: none;
+  user-select: none;
 }
 
-.desktop-world {
-  position: absolute;
-  inset: 0;
-}
-
-.wilderness-canvas {
+.square-growth-canvas {
   position: absolute !important;
   inset: 0;
   touch-action: none;
 }
 
-.beacon-copy {
+.square-growth-copy {
   position: absolute;
-  left: clamp(18px, 4vw, 56px);
-  top: clamp(18px, 4vw, 48px);
-  max-width: 560px;
-  z-index: 3;
+  left: clamp(18px, 4vw, 58px);
+  top: clamp(18px, 4vw, 52px);
+  z-index: 2;
+  max-width: 640px;
   pointer-events: none;
 }
 
-.beacon-copy p,
-.lens-ring span,
-.world-inscription strong {
-  letter-spacing: 0.12em;
+.square-growth-copy p,
+.square-growth-inscription strong {
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.beacon-copy p {
-  margin: 0 0 8px;
+.square-growth-copy p {
+  margin: 0 0 9px;
   color: #67e8f9;
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.beacon-copy h1 {
-  margin: 0;
-  color: #f8fafc;
-  font-size: clamp(2.4rem, 6.6vw, 6.8rem);
-  letter-spacing: 0;
-  line-height: 0.88;
-}
-
-.beacon-copy span {
-  display: block;
-  max-width: 410px;
-  margin-top: 14px;
-  color: rgba(226, 232, 240, 0.78);
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-.world-inscription {
-  position: absolute;
-  left: clamp(18px, 4vw, 56px);
-  bottom: clamp(104px, 14vh, 138px);
-  width: min(620px, calc(100vw - 36px));
-  padding: 0;
-  z-index: 4;
-  pointer-events: none;
-}
-
-.world-inscription strong {
-  display: block;
-  color: #fde68a;
   font-size: 0.78rem;
   font-weight: 950;
 }
 
-.world-inscription span {
-  display: block;
-  margin-top: 10px;
-  color: #ccfbf1;
-  font-size: clamp(1.1rem, 2.3vw, 2rem);
-  font-weight: 850;
-  line-height: 1.15;
+.square-growth-copy h1 {
+  max-width: 720px;
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(2.8rem, 8vw, 7rem);
+  letter-spacing: 0;
+  line-height: 0.9;
 }
 
-.world-inscription span.is-failure {
-  color: #fecdd3;
-}
-
-.lens-ring {
+.square-growth-inscription {
   position: absolute;
-  right: clamp(16px, 4vw, 54px);
-  top: clamp(18px, 5vw, 54px);
-  z-index: 4;
+  left: clamp(18px, 4vw, 58px);
+  bottom: clamp(106px, 15vh, 144px);
+  z-index: 3;
+  width: min(700px, calc(100vw - 36px));
   pointer-events: none;
 }
 
-.lens-ring span {
-  display: inline-grid;
-  min-height: 44px;
-  place-items: center;
-  border: 1px solid rgba(148, 163, 184, 0.34);
-  border-radius: 999px;
-  padding: 0 18px;
-  color: #94a3b8;
-  background: rgba(2, 6, 23, 0.46);
-  font-size: 0.72rem;
-  font-weight: 900;
+.square-growth-inscription strong {
+  display: block;
+  color: #fde68a;
+  font-size: 0.82rem;
+  font-weight: 950;
 }
 
-.lens-ring span.is-lit {
-  border-color: rgba(94, 234, 212, 0.85);
+.square-growth-inscription span {
+  display: block;
+  margin-top: 10px;
   color: #ccfbf1;
-  box-shadow: 0 0 32px rgba(20, 184, 166, 0.36);
+  font-size: clamp(1.25rem, 2.6vw, 2.4rem);
+  font-weight: 900;
+  line-height: 1.1;
 }
 
-.world-actions {
+.square-growth-inscription .square-growth-formula {
+  color: #fef3c7;
+  font-size: clamp(1rem, 1.9vw, 1.55rem);
+}
+
+.square-growth-actions {
   position: absolute;
-  right: clamp(16px, 4vw, 54px);
-  bottom: clamp(18px, 4vw, 46px);
+  right: clamp(18px, 4vw, 58px);
+  bottom: clamp(18px, 4vw, 48px);
+  z-index: 4;
   display: flex;
   gap: 10px;
-  z-index: 6;
 }
 
-.world-actions button {
-  min-width: 132px;
-  min-height: 48px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+.square-growth-actions button {
+  min-width: 148px;
+  min-height: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.76);
+  background: rgba(15, 23, 42, 0.72);
   color: #ecfeff;
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 900;
+  font-weight: 950;
 }
 
-.world-actions button:first-child {
-  background: #14b8a6;
-  color: #042f2e;
+.square-growth-actions button:first-child {
+  background: #fbbf24;
+  color: #1c1917;
 }
 
-.world-actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.42;
+.square-growth-actions button:focus-visible {
+  outline: 3px solid rgba(103, 232, 249, 0.8);
+  outline-offset: 4px;
 }
 
-.proof-inscription {
-  position: absolute;
-  right: clamp(16px, 4vw, 54px);
-  top: 112px;
-  width: min(470px, calc(100vw - 32px));
-  max-height: calc(100vh - 200px);
-  overflow: auto;
-  z-index: 7;
-  border-left: 1px solid rgba(94, 234, 212, 0.55);
-  padding-left: 18px;
-  color: #e0f2fe;
-  background: linear-gradient(90deg, rgba(8, 47, 73, 0.26), transparent);
-}
-
-.proof-inscription h2 {
-  margin: 0 0 12px;
-  color: #67e8f9;
-  font-size: 0.84rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.proof-inscription pre {
-  margin: 0;
-  white-space: pre-wrap;
-  color: rgba(240, 249, 255, 0.88);
-  font-family: inherit;
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-
-.horizon-chip {
-  min-width: 160px;
-  border: 1px solid rgba(125, 211, 252, 0.45);
-  border-radius: 999px;
-  padding: 8px 12px;
-  color: #bae6fd;
-  background: rgba(12, 74, 110, 0.56);
-  font-size: 12px;
-  font-weight: 900;
-  text-align: center;
+.square-growth-shell.is-hundredClimax .square-growth-copy h1 {
+  color: #fef3c7;
 }
 
 @media (max-width: 760px) {
-  .wilderness-shell {
+  .square-growth-shell {
     min-height: 100svh;
   }
 
-  .beacon-copy {
-    top: max(12px, env(safe-area-inset-top));
-    left: 14px;
-    right: 14px;
+  .square-growth-copy {
+    top: max(14px, env(safe-area-inset-top));
+    left: 16px;
+    right: 16px;
     max-width: none;
   }
 
-  .beacon-copy p {
-    margin-bottom: 5px;
+  .square-growth-copy p {
+    margin-bottom: 6px;
     font-size: 0.62rem;
-    letter-spacing: 0.14em;
   }
 
-  .beacon-copy h1 {
-    max-width: 300px;
-    font-size: clamp(1.55rem, 8.2vw, 2.25rem);
-    line-height: 1;
+  .square-growth-copy h1 {
+    max-width: 330px;
+    font-size: clamp(2rem, 10vw, 3.2rem);
+    line-height: 0.96;
   }
 
-  .beacon-copy span {
-    display: none;
-  }
-
-  .lens-ring {
-    top: max(16px, env(safe-area-inset-top));
-    right: 12px;
-    bottom: auto;
-    left: auto;
-    max-width: 164px;
-  }
-
-  .lens-ring span {
-    min-height: 32px;
-    padding: 0 10px;
-    border-color: rgba(148, 163, 184, 0.28);
-    background: rgba(2, 6, 23, 0.68);
-    font-size: 0.55rem;
-    letter-spacing: 0.08em;
-    text-align: center;
-  }
-
-  .world-inscription {
-    left: 12px;
-    right: 12px;
-    bottom: calc(82px + env(safe-area-inset-bottom));
+  .square-growth-inscription {
+    left: 14px;
+    right: 14px;
+    bottom: calc(90px + env(safe-area-inset-bottom));
     width: auto;
-    min-height: 74px;
-    padding: 12px 13px;
-    border: 1px solid rgba(125, 211, 252, 0.2);
-    border-radius: 18px;
-    background: rgba(2, 6, 23, 0.68);
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+    min-height: 86px;
+    border: 1px solid rgba(125, 211, 252, 0.22);
+    border-radius: 22px;
+    padding: 14px 15px;
+    background: rgba(2, 6, 23, 0.62);
+    box-shadow: 0 18px 54px rgba(0, 0, 0, 0.36);
     backdrop-filter: blur(14px);
   }
 
-  .world-inscription strong {
-    font-size: 0.62rem;
-    letter-spacing: 0.1em;
+  .square-growth-inscription strong {
+    font-size: 0.68rem;
     line-height: 1.25;
   }
 
-  .world-inscription span {
-    margin-top: 7px;
-    font-size: 0.98rem;
-    line-height: 1.22;
+  .square-growth-inscription span {
+    margin-top: 8px;
+    font-size: 1rem;
   }
 
-  .world-actions {
-    left: 12px;
-    right: 12px;
-    bottom: max(12px, env(safe-area-inset-bottom));
-    justify-content: stretch;
-    gap: 8px;
+  .square-growth-actions {
+    left: 14px;
+    right: 14px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    gap: 9px;
   }
 
-  .world-actions button {
+  .square-growth-actions button {
     flex: 1;
     min-width: 0;
-    min-height: 56px;
-    border-radius: 18px;
-    background: rgba(15, 23, 42, 0.84);
-    font-size: 0.86rem;
-  }
-
-  .world-actions button:first-child {
-    flex: 1.35;
-  }
-
-  .proof-inscription {
-    left: 12px;
-    right: 12px;
-    top: max(116px, calc(env(safe-area-inset-top) + 96px));
-    bottom: calc(148px + env(safe-area-inset-bottom));
-    width: auto;
-    max-height: none;
-    border: 1px solid rgba(94, 234, 212, 0.32);
+    min-height: 58px;
     border-radius: 20px;
-    padding: 14px;
-    background:
-      linear-gradient(180deg, rgba(8, 47, 73, 0.8), rgba(2, 6, 23, 0.86));
-    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42);
-    backdrop-filter: blur(16px);
-  }
-
-  .proof-inscription h2 {
-    font-size: 0.7rem;
-  }
-
-  .proof-inscription pre {
-    font-size: 0.78rem;
-    line-height: 1.42;
-  }
-
-  .horizon-chip {
-    min-width: 124px;
-    padding: 6px 9px;
-    font-size: 10px;
+    font-size: 0.86rem;
   }
 }
 
 @media (max-width: 390px) {
-  .beacon-copy h1 {
-    max-width: 250px;
-    font-size: 1.48rem;
+  .square-growth-copy h1 {
+    max-width: 290px;
+    font-size: 1.9rem;
   }
 
-  .lens-ring {
-    max-width: 132px;
+  .square-growth-inscription {
+    min-height: 78px;
+    padding: 12px 13px;
   }
 
-  .lens-ring span {
-    font-size: 0.5rem;
-  }
-
-  .world-inscription {
-    min-height: 68px;
-    padding: 10px 11px;
-  }
-
-  .world-inscription span {
-    font-size: 0.9rem;
-  }
-
-  .world-actions button {
-    min-height: 52px;
-    font-size: 0.8rem;
+  .square-growth-actions button {
+    min-height: 54px;
+    font-size: 0.78rem;
   }
 }
