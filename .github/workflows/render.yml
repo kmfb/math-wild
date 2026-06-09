@@ -1,42 +1,39 @@
-name: Render Math Wild Lesson
+name: Build Math Wild Wilderness
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  render:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install system dependencies
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg build-essential pkg-config libcairo2-dev libpango1.0-dev fonts-noto-cjk fonts-dejavu
+          corepack enable
+          corepack prepare pnpm@10.30.3 --activate
 
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install
+        run: pnpm install --frozen-lockfile
 
-      - name: Sync dependencies
-        run: uv sync
+      - name: Test
+        run: pnpm test
 
-      - name: Verify and render
-        run: uv run python render_local.py --quality ql
+      - name: Build
+        run: pnpm build
 
-      - name: Check render outputs
-        run: uv run python render_report.py
-
-      - name: Upload renders
+      - name: Upload wilderness web build
         uses: actions/upload-artifact@v4
         with:
-          name: math-wild-renders
-          path: |
-            renders/
-            verification.json
-            generated/
+          name: math-wild-wilderness-web
+          path: apps/wilderness-web/dist/

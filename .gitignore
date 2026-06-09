@@ -1,9 +1,15 @@
 .venv/
+node_modules/
+dist/
+test-results/
+playwright-report/
+*.tsbuildinfo
 __pycache__/
 *.pyc
 .DS_Store
 media/
 renders/
+generated/
 .manim/
 .ipynb_checkpoints/
 .env

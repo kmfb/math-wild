@@ -1,0 +1,182 @@
+import { useMemo, useReducer, useState, type PointerEvent } from "react";
+import {
+  createInitialWorld,
+  dispatchWorld,
+  exportArtifacts,
+  rectangleLensPreview,
+  traceIds,
+  type MathAction,
+  type WorldState,
+} from "@math-wild/core";
+import { WildernessCanvas } from "./WildernessCanvas";
+
+function reducer(state: WorldState, action: MathAction) {
+  return dispatchWorld(state, action);
+}
+
+function hasCopy(state: WorldState) {
+  return Boolean(state.objects["practice-8-copy"]);
+}
+
+function hasLens(state: WorldState) {
+  return Boolean(state.lenses["rectangle-completion"]);
+}
+
+function discoveryReady(state: WorldState) {
+  return state.recognitions.some((recognition) => recognition.kind === "rectangleCompletion");
+}
+
+function canUseMobileViewportGesture() {
+  return typeof window !== "undefined" && window.innerWidth <= 760;
+}
+
+function nextHint(state: WorldState) {
+  if (!hasCopy(state)) return "Make a second stair pattern.";
+  if (!state.recognitions.some((recognition) => recognition.kind === "flippedCopy")) return "Drag the blue copy toward the row field. It will turn as it moves.";
+  if (!discoveryReady(state)) return "Move the copy until the rows complete.";
+  if (!hasLens(state)) return "A Lens is forming from the completed rows.";
+  if (!state.lensResults["beacon-100"]) return "Use the Lens on the distant mountain.";
+  if (!state.lensResults["counterexample-8"]) return "Test the Lens on a nearby broken stair.";
+  if (!state.proof) return "Compile the path into proof.";
+  return "A new horizon is visible.";
+}
+
+export default function App() {
+  const [state, dispatch] = useReducer(reducer, undefined, createInitialWorld);
+  const [viewportDrag, setViewportDrag] = useState({
+    active: false,
+    startX: 0,
+    startY: 0,
+    startCoreX: 0,
+    startCoreY: 0,
+    moved: false,
+  });
+  const artifacts = useMemo(() => (state.proof ? exportArtifacts(state) : undefined), [state]);
+  const beaconPreview = rectangleLensPreview(state.objects["beacon-100"], state);
+  const failure = state.lensResults["counterexample-8"];
+  const success = state.lensResults["beacon-100"];
+
+  function runNext() {
+    if (!hasCopy(state)) {
+      dispatch({ type: "duplicateDotSet", targetId: "practice-8", newId: "practice-8-copy" });
+      return;
+    }
+    if (!state.recognitions.some((recognition) => recognition.kind === "flippedCopy")) {
+      dispatch({ type: "flipDotSet", targetId: "practice-8-copy", axis: "y" });
+      return;
+    }
+    if (!discoveryReady(state)) {
+      dispatch({ type: "snapToRectangleCompletion", targetId: "practice-8-copy", partnerId: "practice-8" });
+      return;
+    }
+    if (!hasLens(state)) {
+      dispatch({ type: "createLens", lensId: "rectangle-completion", fromRecognitionId: "rec-rectangle-completion" });
+      return;
+    }
+    if (!success) {
+      dispatch({ type: "applyLens", lensId: "rectangle-completion", targetId: "beacon-100" });
+      return;
+    }
+    if (!failure) {
+      dispatch({ type: "testLens", lensId: "rectangle-completion", targetId: "counterexample-8" });
+      return;
+    }
+    if (!state.proof) {
+      dispatch({ type: "compileProof", traceIds: traceIds(state.trace) });
+    }
+  }
+
+  const copyReadyForGesture = Boolean(state.objects["practice-8-copy"]) && !discoveryReady(state);
+
+  function beginViewportDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!copyReadyForGesture || !canUseMobileViewportGesture()) return;
+    const target = state.objects["practice-8-copy"];
+    if (target?.kind !== "dotSet") return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    if (target.orientation !== "left") {
+      dispatch({ type: "flipDotSet", targetId: target.id, axis: "y" });
+    }
+    setViewportDrag({
+      active: true,
+      startX: event.clientX,
+      startY: event.clientY,
+      startCoreX: target.transform.position.x,
+      startCoreY: target.transform.position.y,
+      moved: false,
+    });
+  }
+
+  function moveViewportDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!viewportDrag.active || !copyReadyForGesture) return;
+    const dx = event.clientX - viewportDrag.startX;
+    const dy = event.clientY - viewportDrag.startY;
+    setViewportDrag((current) => ({ ...current, moved: current.moved || Math.hypot(dx, dy) > 10 }));
+    dispatch({
+      type: "dragDotSet",
+      targetId: "practice-8-copy",
+      to: {
+        x: viewportDrag.startCoreX + dx / 130,
+        y: viewportDrag.startCoreY - dy / 180,
+        z: 0,
+      },
+    });
+  }
+
+  function endViewportDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!viewportDrag.active) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    const shouldSnap = viewportDrag.moved || Math.hypot(event.clientX - viewportDrag.startX, event.clientY - viewportDrag.startY) > 10;
+    setViewportDrag({ active: false, startX: 0, startY: 0, startCoreX: 0, startCoreY: 0, moved: false });
+    if (copyReadyForGesture && shouldSnap) {
+      dispatch({ type: "snapToRectangleCompletion", targetId: "practice-8-copy", partnerId: "practice-8" });
+    }
+  }
+
+  return (
+    <main className="wilderness-shell">
+      <div
+        className="desktop-world"
+        aria-hidden="true"
+        onPointerCancel={endViewportDrag}
+        onPointerDown={beginViewportDrag}
+        onPointerMove={moveViewportDrag}
+        onPointerUp={endViewportDrag}
+      >
+        <WildernessCanvas state={state} dispatch={dispatch} />
+      </div>
+      <section className="beacon-copy" aria-label="Beacon">
+        <p>Beacon</p>
+        <h1>How many dots are inside this mountain?</h1>
+        <span>Discover a Lens locally. Use it at distance. Test where it breaks.</span>
+      </section>
+      <section className="world-inscription" aria-label="World state">
+        <strong>{nextHint(state)}</strong>
+        {success && <span>{beaconPreview.message}: one side holds {String(success.facts.oneTriangle)} dots.</span>}
+        {failure && <span className="is-failure">{failure.explanation}</span>}
+      </section>
+      <section className="lens-ring" aria-label="Lens status">
+        <span className={hasLens(state) ? "is-lit" : ""}>Rectangle Completion Lens</span>
+      </section>
+      <nav className="world-actions" aria-label="Semantic actions">
+        <button type="button" onClick={runNext}>
+          {state.proof ? "Proof compiled" : "Continue"}
+        </button>
+        <button
+          type="button"
+          onClick={() => dispatch({ type: "compileProof", traceIds: traceIds(state.trace) })}
+          disabled={!success || !failure}
+        >
+          Compile proof
+        </button>
+      </nav>
+      {state.proof && artifacts && (
+        <section className="proof-inscription" aria-label="Proof inscription">
+          <h2>Proof inscription</h2>
+          <pre>{artifacts["proof.md"]}</pre>
+        </section>
+      )}
+    </main>
+  );
+}
