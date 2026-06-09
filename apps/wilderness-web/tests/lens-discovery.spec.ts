@@ -27,7 +27,7 @@ test("user can create a Lens, apply it, test failure, and compile proof", async 
   await expect(page.getByText("Proof inscription")).toBeVisible();
   await expect(page.getByText("One triangle contains half as many dots: 5050.")).toBeVisible();
   await expect(page.locator(".world-inscription").getByText("Rows cannot be completed to a uniform length by this Lens.")).toBeVisible();
-  await expect(page.locator(".horizon-chip, .touch-horizon-chip").filter({ hasText: "New horizon unlocked" }).first()).toBeVisible();
+  await expect(page.locator(".horizon-chip").filter({ hasText: "New horizon unlocked" }).first()).toBeVisible();
 });
 
 test("mobile viewport can perform the core Lens loop", async ({ page }) => {
@@ -37,23 +37,21 @@ test("mobile viewport can perform the core Lens loop", async ({ page }) => {
   await expect(page.getByText("Therefore 1 + 2 + ... + n = n(n+1)/2.")).toBeVisible();
 });
 
-test("touch stage drag can complete the rectangle", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "mobile", "Touch-native drag is the mobile interaction contract.");
+test("mobile Three stage drag can complete the rectangle", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "Mobile drag is verified on the Three canvas.");
   await page.goto("/");
 
   const continueButton = page.getByRole("button", { name: "Continue" });
   await continueButton.click();
   await expect(page.getByText("Drag the blue copy toward the row field. It will turn as it moves.")).toBeVisible();
-  await continueButton.click();
-  await expect(page.getByText("Move the copy until the rows complete.")).toBeVisible();
 
-  const surface = page.getByRole("button", { name: "Touch and drag copied stair pattern" });
-  await expect(surface).toBeVisible();
-  const box = await surface.boundingBox();
-  if (!box) throw new Error("Touch stage is missing a bounding box");
+  const canvas = page.locator("canvas");
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("Three canvas is missing a bounding box");
 
-  const start = { x: box.x + box.width * 0.5, y: box.y + box.height * 0.5 };
-  const end = { x: start.x - 80, y: start.y };
+  const start = { x: box.x + box.width * 0.74, y: box.y + box.height * 0.62 };
+  const end = { x: box.x + box.width * 0.5, y: box.y + box.height * 0.6 };
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
   await page.mouse.move(end.x, end.y, { steps: 8 });

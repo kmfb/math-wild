@@ -1,4 +1,4 @@
-import { useMemo, useReducer } from "react";
+import { useMemo, useReducer, useState, type PointerEvent } from "react";
 import {
   createInitialWorld,
   dispatchWorld,
@@ -9,7 +9,6 @@ import {
   type WorldState,
 } from "@math-wild/core";
 import { WildernessCanvas } from "./WildernessCanvas";
-import { TouchWilderness } from "./TouchWilderness";
 
 function reducer(state: WorldState, action: MathAction) {
   return dispatchWorld(state, action);
@@ -27,6 +26,10 @@ function discoveryReady(state: WorldState) {
   return state.recognitions.some((recognition) => recognition.kind === "rectangleCompletion");
 }
 
+function canUseMobileViewportGesture() {
+  return typeof window !== "undefined" && window.innerWidth <= 760;
+}
+
 function nextHint(state: WorldState) {
   if (!hasCopy(state)) return "Make a second stair pattern.";
   if (!state.recognitions.some((recognition) => recognition.kind === "flippedCopy")) return "Drag the blue copy toward the row field. It will turn as it moves.";
@@ -40,6 +43,14 @@ function nextHint(state: WorldState) {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialWorld);
+  const [viewportDrag, setViewportDrag] = useState({
+    active: false,
+    startX: 0,
+    startY: 0,
+    startCoreX: 0,
+    startCoreY: 0,
+    moved: false,
+  });
   const artifacts = useMemo(() => (state.proof ? exportArtifacts(state) : undefined), [state]);
   const beaconPreview = rectangleLensPreview(state.objects["beacon-100"], state);
   const failure = state.lensResults["counterexample-8"];
@@ -75,12 +86,66 @@ export default function App() {
     }
   }
 
+  const copyReadyForGesture = Boolean(state.objects["practice-8-copy"]) && !discoveryReady(state);
+
+  function beginViewportDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!copyReadyForGesture || !canUseMobileViewportGesture()) return;
+    const target = state.objects["practice-8-copy"];
+    if (target?.kind !== "dotSet") return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    if (target.orientation !== "left") {
+      dispatch({ type: "flipDotSet", targetId: target.id, axis: "y" });
+    }
+    setViewportDrag({
+      active: true,
+      startX: event.clientX,
+      startY: event.clientY,
+      startCoreX: target.transform.position.x,
+      startCoreY: target.transform.position.y,
+      moved: false,
+    });
+  }
+
+  function moveViewportDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!viewportDrag.active || !copyReadyForGesture) return;
+    const dx = event.clientX - viewportDrag.startX;
+    const dy = event.clientY - viewportDrag.startY;
+    setViewportDrag((current) => ({ ...current, moved: current.moved || Math.hypot(dx, dy) > 10 }));
+    dispatch({
+      type: "dragDotSet",
+      targetId: "practice-8-copy",
+      to: {
+        x: viewportDrag.startCoreX + dx / 130,
+        y: viewportDrag.startCoreY - dy / 180,
+        z: 0,
+      },
+    });
+  }
+
+  function endViewportDrag(event: PointerEvent<HTMLDivElement>) {
+    if (!viewportDrag.active) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    const shouldSnap = viewportDrag.moved || Math.hypot(event.clientX - viewportDrag.startX, event.clientY - viewportDrag.startY) > 10;
+    setViewportDrag({ active: false, startX: 0, startY: 0, startCoreX: 0, startCoreY: 0, moved: false });
+    if (copyReadyForGesture && shouldSnap) {
+      dispatch({ type: "snapToRectangleCompletion", targetId: "practice-8-copy", partnerId: "practice-8" });
+    }
+  }
+
   return (
     <main className="wilderness-shell">
-      <div className="desktop-world" aria-hidden="true">
+      <div
+        className="desktop-world"
+        aria-hidden="true"
+        onPointerCancel={endViewportDrag}
+        onPointerDown={beginViewportDrag}
+        onPointerMove={moveViewportDrag}
+        onPointerUp={endViewportDrag}
+      >
         <WildernessCanvas state={state} dispatch={dispatch} />
       </div>
-      <TouchWilderness state={state} dispatch={dispatch} />
       <section className="beacon-copy" aria-label="Beacon">
         <p>Beacon</p>
         <h1>How many dots are inside this mountain?</h1>
