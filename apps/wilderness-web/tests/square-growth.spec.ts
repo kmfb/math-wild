@@ -21,9 +21,9 @@ test("user can pull outward to grow odd rings into square structure", async ({ p
   await openHero(page);
 
   await dragOutward(page);
-  await expect(page.getByText("+3 lights makes a 2×2 square.")).toBeVisible();
+  await expect(page.getByText("+3 outer ring → 2×2 square.")).toBeVisible();
   await dragOutward(page);
-  await expect(page.getByText("+5 lights makes a 3×3 square.")).toBeVisible();
+  await expect(page.getByText("+5 outer ring → 3×3 square.")).toBeVisible();
   await dragOutward(page);
   await expect(page.getByText("1 + 3 + 5 + 7 = 4²")).toBeVisible();
 });
@@ -47,5 +47,5 @@ test("mobile drag gesture grows a ring", async ({ page }, testInfo) => {
 
   await dragOutward(page);
 
-  await expect(page.getByText("+3 lights makes a 2×2 square.")).toBeVisible();
+  await expect(page.getByText("+3 outer ring → 2×2 square.")).toBeVisible();
 });

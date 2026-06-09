@@ -64,17 +64,32 @@ function shellArm(dot: SquareGrowthDot, n: number): "bottom" | "right" {
 }
 
 function PracticeSquare({ n }: { n: number }) {
-  const priorDots = useMemo(() => squareDots(Math.max(1, n - 1)), [n]);
-  const shell = useMemo(() => squareShell(n), [n]);
+  const dots = useMemo(() => squareDots(n), [n]);
+  const priorDots = useMemo(() => dots.filter((dot) => dot.ring < n), [dots, n]);
+  const shell = useMemo(() => dots.filter((dot) => dot.ring === n), [dots, n]);
   const freshRing = n;
   const spacing = 0.28;
+  const shellExtent = (n - 1) * spacing + 0.18;
+  const edge = ((n - 1) / 2) * spacing;
 
   return (
     <group position={[0, -0.22, 0]}>
       <mesh position={[0, 0, -0.08]}>
-        <boxGeometry args={[Math.max(1.1, n * spacing + 0.42), Math.max(1.1, n * spacing + 0.42), 0.04]} />
+        <boxGeometry args={[Math.max(1.08, n * spacing + 0.36), Math.max(1.08, n * spacing + 0.36), 0.04]} />
         <meshStandardMaterial color="#111827" emissive="#0f172a" emissiveIntensity={0.5} transparent opacity={0.68} />
       </mesh>
+      {n >= 2 && (
+        <group position={[0, 0, -0.03]}>
+          <mesh position={[0, -edge, 0]}>
+            <boxGeometry args={[shellExtent, 0.022, 0.02]} />
+            <meshStandardMaterial color="#67e8f9" emissive="#0891b2" emissiveIntensity={1.05} transparent opacity={0.78} />
+          </mesh>
+          <mesh position={[edge, 0, 0]}>
+            <boxGeometry args={[0.022, shellExtent, 0.02]} />
+            <meshStandardMaterial color="#5eead4" emissive="#14b8a6" emissiveIntensity={1.05} transparent opacity={0.78} />
+          </mesh>
+        </group>
+      )}
       {priorDots.map((dot) => (
         <GlowDot key={dot.id} x={dot.x * spacing} y={dot.y * spacing} fresh={false} />
       ))}
@@ -82,17 +97,13 @@ function PracticeSquare({ n }: { n: number }) {
         <GlowDot key={dot.id} x={dot.x * spacing} y={dot.y * spacing} fresh={freshRing > 1} arm={shellArm(dot, n)} />
       ))}
       {n >= 2 && (
-        <group position={[0, -n * spacing * 0.5 - 0.14, 0.05]}>
+        <group position={[0, -edge - 0.28, 0.05]}>
           <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[n * spacing, 0.026, 0.026]} />
-            <meshStandardMaterial color="#67e8f9" emissive="#0891b2" emissiveIntensity={1.25} />
+            <boxGeometry args={[0.78, 0.19, 0.02]} />
+            <meshStandardMaterial color="#06131e" emissive="#083344" emissiveIntensity={0.55} transparent opacity={0.86} />
           </mesh>
-          <mesh position={[n * spacing * 0.5 - 0.01, n * spacing * 0.5 - 0.01, 0]}>
-            <boxGeometry args={[0.026, (n - 1) * spacing, 0.026]} />
-            <meshStandardMaterial color="#5eead4" emissive="#14b8a6" emissiveIntensity={1.25} />
-          </mesh>
-          <Text position={[0.08, -0.18, 0]} fontSize={0.11} color="#ccfbf1" anchorX="center">
-            {n} + {n - 1} = {2 * n - 1}
+          <Text position={[0, -0.035, 0.03]} fontSize={0.13} color="#ccfbf1" anchorX="center">
+            +{2 * n - 1} outer ring
           </Text>
         </group>
       )}
@@ -103,7 +114,7 @@ function PracticeSquare({ n }: { n: number }) {
             <meshStandardMaterial color="#5eead4" emissive="#14b8a6" emissiveIntensity={1.2} />
           </mesh>
           <Text position={[0, -0.18, 0]} fontSize={0.12} color="#ccfbf1" anchorX="center">
-            side length {n}
+            {n} by {n}
           </Text>
         </group>
       )}
@@ -272,7 +283,7 @@ export function SquareGrowthHero() {
         <strong>{prompt}</strong>
         {phase !== "beacon" && phase !== "hundredClimax" && (
           <span>
-            +{current.added} lights makes a {n}×{n} square.
+            +{current.added} outer ring → {n}×{n} square.
           </span>
         )}
         {phase !== "beacon" && phase !== "hundredClimax" && n >= 4 && (
