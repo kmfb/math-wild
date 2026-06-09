@@ -30,20 +30,20 @@ A Lens is a reusable mathematical way of seeing.
 
 A good experience does not end with an answer. It ends with a tool the user can apply elsewhere.
 
-Example:
+Current first Lens:
 
 ```text
 Discovery:
-Two identical triangular dot patterns can complete a rectangle.
+Each next odd number grows a square by one outer shell.
 
 Lens:
-Rectangle Completion Lens
+Square Growth Lens
 
 Power:
-It reveals 1 + 2 + ... + n = n(n+1)/2.
+It sees 1 + 3 + 5 + ... + (2n - 1) as an n×n square.
 
 Boundary:
-It does not apply to arbitrary stair-like patterns.
+It applies to odd square-shell growth, not arbitrary sequences.
 ```
 
 ## Highest-Level Loop
@@ -192,6 +192,7 @@ duplicateDotSet
 flipDotSet
 dragDotSet
 snapToRectangleCompletion
+growSquareShell
 applyLens
 testLensOnCounterexample
 acceptLens
@@ -270,38 +271,38 @@ optional manim_plan.json
 The first target experience is:
 
 ```text
-Rectangle Completion Lens
+Square Growth Lens
 ```
 
 World:
 
 ```text
-Dot World
+Square World
 ```
 
 Beacon:
 
 ```text
-100-layer triangular dot mountain
+100×100 dark light plaza
 ```
 
 Practice object:
 
 ```text
-8-layer stair-dot pattern
+1×1 seed square
 ```
 
 Counterexample:
 
 ```text
-nearby stair-like pattern where rectangle completion fails
+nearby sequence that does not grow by odd square shells
 ```
 
 Success sentence:
 
 ```text
-I found a way to complete a triangular stair pattern into a rectangle.
-It works for this kind of stair pattern, but not every pattern.
+I found that each next odd number grows a square by one outer layer.
+It works for odd square-shell growth, but not every sequence.
 ```
 
 ## Anti-Goals

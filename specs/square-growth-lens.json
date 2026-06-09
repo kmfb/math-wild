@@ -1,0 +1,41 @@
+{
+  "id": "square-growth-lens",
+  "world": "Square World",
+  "beacon": {
+    "id": "light-plaza-100",
+    "n": 100,
+    "shape": "square",
+    "question": "How many lights would fill a 100×100 square?"
+  },
+  "practiceObject": {
+    "id": "seed-square-1",
+    "n": 1,
+    "pattern": "squareShellGrowth"
+  },
+  "lens": {
+    "id": "square-growth",
+    "name": "Square Growth Lens",
+    "discoverySentence": "Each next odd number grows a square by one outer layer.",
+    "power": "It sees 1 + 3 + 5 + ... + (2n - 1) as an n×n square."
+  },
+  "actions": [
+    {
+      "type": "growSquareShell",
+      "meaning": "Grow from (k - 1)×(k - 1) to k×k by adding one L-shaped shell."
+    },
+    {
+      "type": "applyLens",
+      "meaning": "Apply the shell-growth Lens to the 100×100 light plaza."
+    }
+  ],
+  "boundary": {
+    "appliesTo": "odd square-shell growth",
+    "doesNotApplyTo": [
+      "1 + 2 + 3 + ...",
+      "2 + 4 + 6 + ...",
+      "1 + 3 + 7 + 9 + ..."
+    ],
+    "reason": "These sequences do not add exactly one L-shaped shell of size 2k - 1 at every step."
+  },
+  "successSentence": "I found that each next odd number grows a square by one outer layer."
+}

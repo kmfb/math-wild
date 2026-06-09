@@ -7,29 +7,48 @@ It is an interactive mathematical world where users manipulate semantic objects,
 This repo currently implements the first product slice:
 
 ```text
-Rectangle Completion Lens
+Square Growth Lens
 ```
 
 The user starts with a distant unresolved Beacon:
 
 ```text
-100-layer triangular dot mountain
+100×100 dark light plaza
 ```
 
-They explore a smaller local object:
+They return to a smaller local object:
 
 ```text
-8-layer stair-dot pattern
+1×1 seed square
 ```
 
-Through duplicate, flip, drag, and snap actions, the system recognizes:
+Through one action, growing outward, the world reveals:
 
 ```text
-two identical stair-dot patterns complete a rectangle
-uniform rows
+1
+1 + 3
+1 + 3 + 5
+1 + 3 + 5 + 7
 ```
 
-That recognition becomes a reusable Lens. The user can apply it to the 100-layer Beacon, test it on a nearby broken stair counterexample, and compile the semantic trace into proof.
+Each new odd number is not just another term. It is the next square shell:
+
+```text
+k bottom-edge lights + (k - 1) right-edge lights = 2k - 1
+```
+
+That recognition becomes a reusable Lens.
+
+```text
+Square Growth Lens:
+1 + 3 + 5 + ... + (2n - 1) is an n×n square.
+```
+
+The current Hero applies that Lens back to the 100×100 Beacon:
+
+```text
+1 + 3 + 5 + ... + 199 = 100² = 10000
+```
 
 ## Shape
 
@@ -39,11 +58,13 @@ apps/
 
 packages/
 ├─ core/                  world state, actions, trace, recognition, lenses, proof compiler
-└─ three-world/           semantic dot layout helpers for Three renderer
+└─ three-world/           semantic geometry helpers for Three renderer
 
 specs/
-└─ rectangle-completion-lens.json
+└─ square-growth-lens.json
 ```
+
+Rectangle Completion remains a later Shrine candidate. It is no longer the first Hero.
 
 ## Commands
 
@@ -90,45 +111,37 @@ LensResult
 ProofStep
 ```
 
-React and Three.js visualize semantic state. The reducer mutates semantic state. The proof compiler reads trace and Lens results.
+React and Three.js visualize semantic state. Geometry helpers encode the mathematical structure being rendered.
 
-## Required Outputs
+## Current Geometry Contract
 
-The first slice can produce:
+The Square Growth slice is built around outer shell growth:
 
 ```text
-trace.json
-lens.json
-lens_result.json
-proof_steps.json
-proof.md
-```
-
-These are generated in memory by:
-
-```ts
-exportArtifacts(worldState)
+squareShell(k).length === 2k - 1
+squareDots(n).length === n²
+sum(shells 1..n) === n²
 ```
 
 ## Tests
 
-Current unit coverage includes:
+Current coverage includes:
 
 ```text
-stair dot count
-duplicate preserves count
-flip preserves count
-rectangle completion recognition
-uniform row recognition
-Lens applicability success
-Lens applicability failure
-proof compilation
+rectangle completion legacy core tests
+square shell length
+square dot count
+growth sequence totals
+desktop Square Growth interaction
+mobile Square Growth drag interaction
+100×100 climax
 ```
 
 Run:
 
 ```bash
 pnpm test
+pnpm test:e2e
 ```
 
 ## Product Standard
@@ -142,6 +155,5 @@ The page showed a formula.
 Success is:
 
 ```text
-I found a method.
-This method works here, but not on every pattern.
+I found that each next odd number grows a square by one outer layer.
 ```

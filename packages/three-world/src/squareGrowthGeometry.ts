@@ -10,7 +10,7 @@ export type GrowthFrame = {
   added: number;
   total: number;
   dots: SquareGrowthDot[];
-  ring: SquareGrowthDot[];
+  shell: SquareGrowthDot[];
 };
 
 function centerOffset(n: number) {
@@ -34,7 +34,7 @@ export function squareDots(n: number): SquareGrowthDot[] {
   return dots;
 }
 
-export function ringDots(k: number): SquareGrowthDot[] {
+export function squareShell(k: number): SquareGrowthDot[] {
   if (k < 1) return [];
   const offset = centerOffset(k);
   const dots: SquareGrowthDot[] = [];
@@ -58,6 +58,8 @@ export function ringDots(k: number): SquareGrowthDot[] {
   return dots;
 }
 
+export const ringDots = squareShell;
+
 export function growthSequence(maxN: number): GrowthFrame[] {
   return Array.from({ length: maxN }, (_, index) => {
     const n = index + 1;
@@ -66,7 +68,7 @@ export function growthSequence(maxN: number): GrowthFrame[] {
       added: 2 * n - 1,
       total: n * n,
       dots: squareDots(n),
-      ring: ringDots(n),
+      shell: squareShell(n),
     };
   });
 }
