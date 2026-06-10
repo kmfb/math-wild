@@ -1,135 +1,159 @@
 # Math Wild
 
-A Manim-based math visual scene compiler prototype for exploratory math lessons.
+Math Wild is a **Mathematical Imagination OS**.
 
-Current chapter:
+It is an interactive mathematical world where users manipulate semantic objects, discover reusable mathematical lenses, test their boundaries, and compile their actions into proof.
 
-> 平衡与方程：等号不是答案，而是关系。
-
-## What this repo does
-
-This repo compiles a structured chapter spec into a Manim scene, renders a lesson video, exports keyframes, and composes a poster from those keyframes.
+This repo currently implements the first product slice:
 
 ```text
-chapter_spec.json
-→ verify.py
-→ compile_to_manim.py
-→ generated/balance_equations_scene.py
-→ render_local.py
-→ renders/
+Square Growth Lens
 ```
 
-## Install with uv
-
-### macOS
-
-```bash
-bash scripts/setup_macos_uv.sh
-uv run python render_local.py --quality ql
-```
-
-### Ubuntu / Debian
-
-```bash
-bash scripts/setup_ubuntu_uv.sh
-uv run python render_local.py --quality ql
-```
-
-### Windows PowerShell
-
-Install FFmpeg first:
-
-```powershell
-winget install Gyan.FFmpeg
-```
-
-Then:
-
-```powershell
-.\scripts\setup_windows_uv.ps1
-uv run python render_local.py --quality ql
-```
-
-## Minimal commands
-
-```bash
-uv sync
-uv run python verify.py
-uv run python compile_to_manim.py chapter_spec.json --out generated/balance_equations_scene.py
-uv run python render_local.py --quality ql
-```
-
-High-quality render:
-
-```bash
-uv run python render_local.py --quality qh
-```
-
-Only render still keyframes and poster:
-
-```bash
-uv run python render_local.py --quality ql --skip-video
-```
-
-## Outputs
-
-After rendering:
+The user starts with a distant unresolved Beacon:
 
 ```text
-renders/
-├─ balance_equations_manim.mp4
-├─ keyframes/
-│  ├─ KF01MainBalance.png
-│  ├─ KF02SubtractThree.png
-│  ├─ KF03XEqualsFive.png
-│  ├─ KF04TwoX.png
-│  ├─ KF05SplitTwoX.png
-│  └─ KF06Summary.png
-└─ balance_equations_poster_from_manim.png
+100×100 dark light plaza
 ```
 
-## Push this repo to GitHub
-
-Create a new GitHub repo and push:
-
-```bash
-bash scripts/push_new_github_repo.sh math-wild private
-```
-
-Or push to an existing repo:
-
-```bash
-bash scripts/push_existing_github_repo.sh git@github.com:USER/REPO.git
-```
-
-## GitHub Actions
-
-This repo includes:
+They return to a smaller local object:
 
 ```text
-.github/workflows/render.yml
+1×1 seed square
 ```
 
-After pushing to GitHub, you can run the workflow manually from the Actions tab. It uses uv, installs system dependencies on Ubuntu, renders the Manim scene, and uploads `renders/` as an artifact.
-
-## Font note
-
-The default CJK font is:
+Through one action, growing outward, the world reveals:
 
 ```text
-Noto Sans CJK SC
+1
+1 + 3
+1 + 3 + 5
+1 + 3 + 5 + 7
 ```
 
-Override it when needed:
+Each new odd number is not just another term. It is the next square shell:
+
+```text
+k bottom-edge lights + (k - 1) right-edge lights = 2k - 1
+```
+
+That recognition becomes a reusable Lens.
+
+```text
+Square Growth Lens:
+1 + 3 + 5 + ... + (2n - 1) is an n×n square.
+```
+
+The current Hero applies that Lens back to the 100×100 Beacon:
+
+```text
+1 + 3 + 5 + ... + 199 = 100² = 10000
+```
+
+## Shape
+
+```text
+apps/
+└─ wilderness-web/        React + Three.js wilderness experience
+
+packages/
+├─ core/                  world state, actions, trace, recognition, lenses, proof compiler
+└─ three-world/           semantic geometry helpers for Three renderer
+
+specs/
+└─ square-growth-lens.json
+```
+
+Rectangle Completion remains a later Shrine candidate. It is no longer the first Hero.
+
+## Commands
 
 ```bash
-MATH_WILD_CJK_FONT="Microsoft YaHei" uv run python render_local.py --quality ql
+pnpm install
+pnpm test
+pnpm build
+pnpm dev
 ```
 
-## Core principle
+The dev server runs:
 
 ```text
-scene spec controls math facts
-Manim controls visual expression
-poster composer only combines Manim keyframes
+apps/wilderness-web
+```
+
+## Core Loop
+
+```text
+Beacon
+-> Exploration
+-> Recognition
+-> Lens Creation
+-> Lens Application
+-> Lens Failure Boundary
+-> Proof Compilation
+-> New Horizon
+```
+
+## Source Of Truth
+
+The renderer is not the source of mathematical truth.
+
+The source of truth is:
+
+```text
+WorldState
+MathObject
+MathAction
+TraceEvent
+RecognitionResult
+MathLens
+LensResult
+ProofStep
+```
+
+React and Three.js visualize semantic state. Geometry helpers encode the mathematical structure being rendered.
+
+## Current Geometry Contract
+
+The Square Growth slice is built around outer shell growth:
+
+```text
+squareShell(k).length === 2k - 1
+squareDots(n).length === n²
+sum(shells 1..n) === n²
+```
+
+## Tests
+
+Current coverage includes:
+
+```text
+rectangle completion legacy core tests
+square shell length
+square dot count
+growth sequence totals
+desktop Square Growth interaction
+mobile Square Growth drag interaction
+100×100 climax
+```
+
+Run:
+
+```bash
+pnpm test
+pnpm test:e2e
+```
+
+## Product Standard
+
+Success is not:
+
+```text
+The page showed a formula.
+```
+
+Success is:
+
+```text
+I found that each next odd number grows a square by one outer layer.
 ```
