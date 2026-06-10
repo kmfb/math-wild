@@ -1,6 +1,8 @@
 export type SquareGrowthAction =
   | { type: "growSquareShell"; from: number; to: number }
-  | { type: "applySquareGrowthLens"; targetN: number };
+  | { type: "growNextSquareShell"; maxN: number }
+  | { type: "applySquareGrowthLens"; targetN: number }
+  | { type: "resetSquareGrowth" };
 
 export type SquareGrowthTraceEvent = {
   id: string;
@@ -87,12 +89,23 @@ export function dispatchSquareGrowth(state: SquareGrowthState, action: SquareGro
     };
   }
 
+  if (action.type === "growNextSquareShell") {
+    next = {
+      ...state,
+      n: Math.min(action.maxN, state.n + 1),
+    };
+  }
+
   if (action.type === "applySquareGrowthLens") {
     next = {
       ...state,
       targetN: action.targetN,
       lensResult: applySquareGrowthLens(action.targetN),
     };
+  }
+
+  if (action.type === "resetSquareGrowth") {
+    next = createInitialSquareGrowthState(state.targetN);
   }
 
   const after = snapshot(next);

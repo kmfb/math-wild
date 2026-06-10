@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 
 async function openHero(page: import("@playwright/test").Page) {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Light grows in odd rings." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Light the 100×100 plaza." })).toBeVisible();
+  await expect(page.getByText("This dark plaza is 100 by 100. How many lights does it need?")).toBeVisible();
   await expect(page.locator("canvas")).toBeVisible();
 }
 
@@ -30,15 +31,16 @@ test("user can pull outward to grow odd rings into square structure", async ({ p
 
 test("formula and hundred square climax are reachable from fallback controls", async ({ page }) => {
   await openHero(page);
+  await dragOutward(page);
 
   const grow = page.getByRole("button", { name: "Watch one ring" });
-  for (let index = 0; index < 5; index += 1) {
+  for (let index = 0; index < 4; index += 1) {
     await grow.click();
   }
 
   await expect(page.getByText("1 + 3 + 5 + ... + (2n - 1) = n²")).toBeVisible();
-  await page.getByRole("button", { name: "Light 100×100" }).click();
-  await expect(page.getByText("1 + 3 + 5 + ... + 199 = 10000")).toBeVisible();
+  await page.getByRole("button", { name: "Light the plaza" }).click();
+  await expect(page.getByText("100×100 = 10000 lights.")).toBeVisible();
 });
 
 test("mobile drag gesture grows a ring", async ({ page }, testInfo) => {

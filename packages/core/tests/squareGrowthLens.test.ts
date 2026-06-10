@@ -37,6 +37,16 @@ describe("Square Growth Lens", () => {
     ]);
   });
 
+  it("resets the square growth world", () => {
+    let state = createInitialSquareGrowthState();
+    state = dispatchSquareGrowth(state, { type: "growSquareShell", from: 1, to: 2 });
+    state = dispatchSquareGrowth(state, { type: "resetSquareGrowth" });
+
+    expect(state.n).toBe(1);
+    expect(state.lensResult).toBeUndefined();
+    expect(state.trace.at(-1)?.action.type).toBe("resetSquareGrowth");
+  });
+
   it("rejects non-shell-growth sequences", () => {
     expect(squareGrowthLensAppliesTo([1, 3, 5, 7]).ok).toBe(true);
     expect(squareGrowthLensAppliesTo([1, 2, 3]).ok).toBe(false);

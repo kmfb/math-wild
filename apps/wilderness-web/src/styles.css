@@ -41,6 +41,18 @@ button {
   touch-action: none;
 }
 
+.square-growth-gesture-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: grab;
+  touch-action: none;
+}
+
+.square-growth-gesture-layer:active {
+  cursor: grabbing;
+}
+
 .square-growth-copy {
   position: absolute;
   left: clamp(18px, 4vw, 58px);
@@ -111,6 +123,10 @@ button {
   gap: 10px;
 }
 
+.square-growth-actions:empty {
+  display: none;
+}
+
 .square-growth-actions button {
   min-width: 148px;
   min-height: 50px;
@@ -123,7 +139,8 @@ button {
   font-weight: 950;
 }
 
-.square-growth-actions button:first-child {
+.square-growth-actions button.is-primary {
+  background: rgba(251, 191, 36, 0.18);
   border-color: rgba(251, 191, 36, 0.34);
   color: #fef3c7;
 }

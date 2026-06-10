@@ -2,14 +2,14 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, Text } from "@react-three/drei";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { useMemo, useReducer, useRef, useState, type PointerEvent } from "react";
-import type { Mesh } from "three";
+import type { Mesh, MeshStandardMaterial } from "three";
 import {
   createInitialSquareGrowthState,
   dispatchSquareGrowth,
   type SquareGrowthLensResult,
   type SquareGrowthState,
 } from "@math-wild/core";
-import { growthSequence, squareDots, squareShell, type SquareGrowthDot } from "@math-wild/three-world";
+import { growthSequence, squareDots, type SquareGrowthDot } from "@math-wild/three-world";
 
 type HeroState = "beacon" | "seed" | "growing" | "structureVisible" | "formulaRevealed" | "hundredClimax";
 
@@ -63,6 +63,41 @@ function shellArm(dot: SquareGrowthDot, n: number): "bottom" | "right" {
   return dot.y === edge ? "bottom" : "right";
 }
 
+function ShellBeam({
+  position,
+  length,
+  orientation,
+}: {
+  position: [number, number, number];
+  length: number;
+  orientation: "horizontal" | "vertical";
+}) {
+  const ref = useRef<Mesh>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const delay = orientation === "horizontal" ? 0 : 0.32;
+    const wave = Math.min(1, Math.max(0.18, (Math.sin(clock.elapsedTime * 2.6 - delay) + 1) / 2));
+    if (orientation === "horizontal") {
+      ref.current.scale.set(wave, 1, 1);
+    } else {
+      ref.current.scale.set(1, wave, 1);
+    }
+  });
+
+  return (
+    <mesh ref={ref} position={position}>
+      <boxGeometry args={orientation === "horizontal" ? [length, 0.022, 0.02] : [0.022, length, 0.02]} />
+      <meshStandardMaterial
+        color={orientation === "horizontal" ? "#67e8f9" : "#5eead4"}
+        emissive={orientation === "horizontal" ? "#0891b2" : "#14b8a6"}
+        emissiveIntensity={1.16}
+        transparent
+        opacity={0.8}
+      />
+    </mesh>
+  );
+}
+
 function PracticeSquare({ n }: { n: number }) {
   const dots = useMemo(() => squareDots(n), [n]);
   const priorDots = useMemo(() => dots.filter((dot) => dot.ring < n), [dots, n]);
@@ -80,14 +115,8 @@ function PracticeSquare({ n }: { n: number }) {
       </mesh>
       {n >= 2 && (
         <group position={[0, 0, -0.03]}>
-          <mesh position={[0, -edge, 0]}>
-            <boxGeometry args={[shellExtent, 0.022, 0.02]} />
-            <meshStandardMaterial color="#67e8f9" emissive="#0891b2" emissiveIntensity={1.05} transparent opacity={0.78} />
-          </mesh>
-          <mesh position={[edge, 0, 0]}>
-            <boxGeometry args={[0.022, shellExtent, 0.02]} />
-            <meshStandardMaterial color="#5eead4" emissive="#14b8a6" emissiveIntensity={1.05} transparent opacity={0.78} />
-          </mesh>
+          <ShellBeam position={[0, -edge, 0]} length={shellExtent} orientation="horizontal" />
+          <ShellBeam position={[edge, 0, 0]} length={shellExtent} orientation="vertical" />
         </group>
       )}
       {priorDots.map((dot) => (
@@ -122,13 +151,43 @@ function PracticeSquare({ n }: { n: number }) {
   );
 }
 
+function BeaconDot({ x, y, ring, lit }: { x: number; y: number; ring: number; lit: boolean }) {
+  const ref = useRef<Mesh>(null);
+  const materialRef = useRef<MeshStandardMaterial>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current || !materialRef.current) return;
+    if (!lit) {
+      ref.current.scale.setScalar(1);
+      return;
+    }
+    const sweep = clock.elapsedTime * 8 - ring * 0.28;
+    const glow = Math.max(0, Math.min(1, sweep));
+    ref.current.scale.setScalar(0.82 + glow * 0.38 + Math.sin(clock.elapsedTime * 3 + ring) * 0.04);
+    materialRef.current.emissiveIntensity = 0.35 + glow * 1.45;
+  });
+
+  return (
+    <mesh ref={ref} position={[x, -y, 0]}>
+      <sphereGeometry args={[0.18, 8, 8]} />
+      <meshStandardMaterial
+        ref={materialRef}
+        color={lit ? "#fde68a" : "#475569"}
+        emissive={lit ? "#f59e0b" : "#164e63"}
+        emissiveIntensity={lit ? 1.4 : 0.35}
+        transparent
+        opacity={lit ? 0.95 : 0.68}
+      />
+    </mesh>
+  );
+}
+
 function BeaconSquare({ lit }: { lit: boolean }) {
   const samples = useMemo(() => {
     const dots = [];
     for (let row = 0; row < 24; row += 1) {
       for (let column = 0; column < 24; column += 1) {
         if ((row + column) % 2 === 0 || row % 7 === 0 || column % 7 === 0) {
-          dots.push({ id: `beacon-${row}-${column}`, x: column, y: row });
+          dots.push({ id: `beacon-${row}-${column}`, x: column, y: row, ring: Math.max(row, column) });
         }
       }
     }
@@ -137,23 +196,17 @@ function BeaconSquare({ lit }: { lit: boolean }) {
 
   return (
     <Float speed={0.45} floatIntensity={0.1}>
-      <group position={lit ? [0, 0.2, -1.4] : [0, 1.55, -2.7]} scale={lit ? 0.13 : 0.05}>
-        <mesh position={[11.5, -11.5, -0.2]}>
+      <group position={lit ? [0, 0.24, -1.4] : [0, 0.06, -1.7]} scale={lit ? 0.13 : 0.115}>
+        <mesh position={[0, 0, -0.2]}>
           <boxGeometry args={[26, 26, 0.1]} />
-          <meshStandardMaterial color="#020617" emissive={lit ? "#92400e" : "#111827"} emissiveIntensity={lit ? 1.15 : 0.2} transparent opacity={lit ? 0.95 : 0.86} />
+          <meshStandardMaterial color="#020617" emissive={lit ? "#92400e" : "#0f172a"} emissiveIntensity={lit ? 1.15 : 0.48} transparent opacity={lit ? 0.95 : 0.9} />
         </mesh>
         {samples.map((dot) => (
-          <mesh key={dot.id} position={[dot.x, -dot.y, 0]}>
-            <sphereGeometry args={[0.18, 8, 8]} />
-            <meshStandardMaterial
-              color={lit ? "#fde68a" : "#334155"}
-              emissive={lit ? "#f59e0b" : "#0f172a"}
-              emissiveIntensity={lit ? 1.4 : 0.35}
-              transparent
-              opacity={lit ? 0.95 : 0.54}
-            />
-          </mesh>
+          <BeaconDot key={dot.id} x={dot.x - 11.5} y={dot.y - 11.5} ring={dot.ring} lit={lit} />
         ))}
+        <Text position={[0, 14.1, 0.15]} fontSize={1.25} color={lit ? "#fde68a" : "#bfdbfe"} anchorX="center">
+          100 × 100
+        </Text>
       </group>
     </Float>
   );
@@ -190,6 +243,8 @@ function FormulaInscription({ n, lensResult }: { n: number; lensResult?: SquareG
 
 function SquareScene({ n, phase, lensResult }: { n: number; phase: HeroState; lensResult?: SquareGrowthLensResult }) {
   const climax = phase === "hundredClimax";
+  const showPractice = phase !== "beacon" && !climax;
+  const showFormula = phase === "formulaRevealed" || climax;
   return (
     <>
       <color attach="background" args={["#03040c"]} />
@@ -198,12 +253,12 @@ function SquareScene({ n, phase, lensResult }: { n: number; phase: HeroState; le
       <pointLight position={[-2.5, 2.5, 4]} intensity={40} color="#fde68a" />
       <pointLight position={[2.5, -0.4, 2.5]} intensity={18} color="#67e8f9" />
       <BeaconSquare lit={climax} />
-      {!climax && (
+      {showPractice && (
         <group position={[0, -0.18, 0]}>
           <PracticeSquare n={n} />
         </group>
       )}
-      <FormulaInscription n={n} lensResult={lensResult} />
+      {showFormula && <FormulaInscription n={n} lensResult={lensResult} />}
       <EffectComposer>
         <Bloom luminanceThreshold={0.16} intensity={1.1} mipmapBlur />
         <Vignette eskil={false} offset={0.18} darkness={0.78} />
@@ -219,91 +274,133 @@ export function SquareGrowthHero() {
     () => createInitialSquareGrowthState(100),
   );
   const [phase, setPhase] = useState<HeroState>("beacon");
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | undefined>();
+  const phaseRef = useRef(phase);
+  const dragStartRef = useRef<{ x: number; y: number } | undefined>(undefined);
+  const dragLastRef = useRef<{ x: number; y: number } | undefined>(undefined);
+  const grewThisDragRef = useRef(false);
   const frames = useMemo(() => growthSequence(maxPracticeN), []);
+  phaseRef.current = phase;
   const n = world.n;
+  const effectivePhase = phase === "beacon" || phase === "hundredClimax" ? phase : nextState(n);
   const current = frames[n - 1];
 
   function grow() {
-    if (phase === "hundredClimax") return;
-    const next = Math.min(maxPracticeN, n + 1);
-    dispatch({ type: "growSquareShell", from: n, to: next });
-    setPhase(nextState(next));
+    if (phaseRef.current === "hundredClimax") return;
+    dispatch({ type: "growNextSquareShell", maxN: maxPracticeN });
+    if (phaseRef.current === "beacon") {
+      setPhase("seed");
+      phaseRef.current = "seed";
+    }
   }
 
   function beginDrag(event: PointerEvent<HTMLElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
-    setDragStart({ x: event.clientX, y: event.clientY });
-    if (phase === "beacon") setPhase("seed");
+    dragStartRef.current = { x: event.clientX, y: event.clientY };
+    dragLastRef.current = dragStartRef.current;
+    grewThisDragRef.current = false;
+    if (phaseRef.current === "beacon") {
+      setPhase("seed");
+      phaseRef.current = "seed";
+    }
   }
 
   function moveDrag(event: PointerEvent<HTMLElement>) {
+    const dragStart = dragStartRef.current;
     if (!dragStart) return;
-    if (Math.hypot(event.clientX - dragStart.x, event.clientY - dragStart.y) > 34) {
-      setDragStart({ x: event.clientX, y: event.clientY });
+    const current = { x: event.clientX, y: event.clientY };
+    dragLastRef.current = current;
+    if (!grewThisDragRef.current && Math.hypot(current.x - dragStart.x, current.y - dragStart.y) > 34) {
+      grewThisDragRef.current = true;
       grow();
     }
   }
 
   function endDrag(event: PointerEvent<HTMLElement>) {
+    const dragStart = dragStartRef.current;
+    const dragEnd = dragLastRef.current ?? { x: event.clientX, y: event.clientY };
+    if (dragStart && !grewThisDragRef.current && Math.hypot(dragEnd.x - dragStart.x, dragEnd.y - dragStart.y) > 34) {
+      grow();
+    }
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    setDragStart(undefined);
+    dragStartRef.current = undefined;
+    dragLastRef.current = undefined;
+    grewThisDragRef.current = false;
   }
 
   function revealHundred() {
     dispatch({ type: "applySquareGrowthLens", targetN: world.targetN });
     setPhase("hundredClimax");
+    phaseRef.current = "hundredClimax";
+  }
+
+  function reset() {
+    dispatch({ type: "resetSquareGrowth" });
+    setPhase("beacon");
+    phaseRef.current = "beacon";
   }
 
   const prompt =
-    phase === "beacon"
-      ? "How many lights would fill a 100×100 square?"
-      : phase === "hundredClimax"
-        ? "The distant square is 100 by 100."
-        : "Pull outward. Each new ring is the next odd number.";
+    effectivePhase === "beacon"
+      ? "This dark plaza is 100 by 100. How many lights does it need?"
+      : effectivePhase === "hundredClimax"
+        ? "The small model lights the whole plaza."
+        : n >= maxPracticeN
+          ? "You found the rule. Bring it back to the plaza."
+          : "Pull outward. Each new border is the next odd number.";
 
   return (
-    <main
-      className={`square-growth-shell is-${phase}`}
-      onPointerCancel={endDrag}
-      onPointerDown={beginDrag}
-      onPointerMove={moveDrag}
-      onPointerUp={endDrag}
-    >
+    <main className={`square-growth-shell is-${effectivePhase}`}>
       <Canvas camera={{ position: [0, 0.05, 5.2], fov: 48 }} className="square-growth-canvas">
-        <SquareScene n={n} phase={phase} lensResult={world.lensResult} />
+        <SquareScene n={n} phase={effectivePhase} lensResult={world.lensResult} />
       </Canvas>
+      <div
+        aria-hidden="true"
+        className="square-growth-gesture-layer"
+        onPointerCancel={endDrag}
+        onPointerDown={beginDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={endDrag}
+      />
       <section className="square-growth-copy" aria-label="Square Growth">
-        <p>Square Growth</p>
-        <h1>Light grows in odd rings.</h1>
+        <p>Light the Plaza</p>
+        <h1>Light the 100×100 plaza.</h1>
       </section>
       <section className="square-growth-inscription" aria-label="Growth state">
         <strong>{prompt}</strong>
-        {phase !== "beacon" && phase !== "hundredClimax" && (
+        {effectivePhase !== "beacon" && effectivePhase !== "hundredClimax" && (
           <span>
             +{current.added} outer ring → {n}×{n} square.
           </span>
         )}
-        {phase !== "beacon" && phase !== "hundredClimax" && n >= 4 && (
+        {effectivePhase !== "beacon" && effectivePhase !== "hundredClimax" && n >= 4 && (
           <span className="square-growth-formula">
             {n >= maxPracticeN ? "1 + 3 + 5 + ... + (2n - 1) = n²" : `${Array.from({ length: n }, (_, index) => String(2 * index + 1)).join(" + ")} = ${n}²`}
           </span>
         )}
-        {phase === "hundredClimax" && world.lensResult && (
+        {effectivePhase === "hundredClimax" && world.lensResult && (
           <span>
-            {world.lensResult.expression} = {world.lensResult.value}
+            {world.lensResult.n}×{world.lensResult.n} = {world.lensResult.value} lights.
           </span>
         )}
       </section>
       <nav className="square-growth-actions" aria-label="Growth controls" onPointerDown={(event) => event.stopPropagation()}>
-        <button type="button" onClick={grow}>
-          Watch one ring
-        </button>
-        <button type="button" onClick={revealHundred}>
-          Light 100×100
-        </button>
+        {effectivePhase !== "beacon" && effectivePhase !== "hundredClimax" && (
+          <button type="button" onClick={grow}>
+            Watch one ring
+          </button>
+        )}
+        {effectivePhase === "formulaRevealed" && (
+          <button className="is-primary" type="button" onClick={revealHundred}>
+            Light the plaza
+          </button>
+        )}
+        {effectivePhase !== "beacon" && effectivePhase !== "hundredClimax" && (
+          <button type="button" onClick={reset}>
+            Reset
+          </button>
+        )}
       </nav>
     </main>
   );
